@@ -1,0 +1,88 @@
+名称：构建SM8550内核
+
+在：
+  workflow_dispatch：
+
+
+工作：
+  
+  建造：
+    
+    运行：ubuntu-latest
+
+    步骤：
+
+    - 名称：最大化构建空间
+      用途：easimon/最大化构建空间@master
+      和：
+        root-Reserve-MB：8192
+        温度储力-MB：2048
+        删除dotnet：'真的'
+        删除android：“ true”
+        删除-哈斯尔：“ true”
+        删除CodeQl：'真的'
+
+    - 名称：配置git
+      运行：|
+         git config -lobal user.name“ yuanqiongyoukong”
+         git config -lobal user.email“ 413722718@qq.com”
+    
+    - 名称：安装编译环境
+      运行：|
+        sudo apt更新&& sudo apt升级-y
+        sudo apt安装ccache curl git repo python3 python-is-python3 -y
+
+    - 名称：拉取OnePlus 12r 内核清单
+      运行：|
+        mkdir内核&& cd内核
+        repo INIT -U https：//github.com/oneplusoss/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml -深度 = 1
+        repo同步-J $（nproc -all）
+        ＃SED -I'203a \ export lto = thin'kernel_platform /oplus/build/oplus_setup.sh'203A \ export lto = thin'Kernel_platform/oplus/build/oplus_setup.sh
+        ＃sed -i's/extort repack_img = true/export repack_img = false/ig'kernel_platform/oplus/build/build/oplus_setup.sh's/extort repack_img = true/export repack_img = false/ig'kernel_platform/oplus/build/build/oplus_setup.sh
+        
+        ＃sed -i's/local default_value = none/local default_value = thin/ig'kernel_platform/oplus/oplus/oplus/oplus/build/build/build/build/oplus_setup.sh's/local default_value = none/local default_value = thin/ig'kernel_platform/oplus/oplus/build/build/build/oplus_setup.sh
+        ＃sed -i的/localdefault_value = enable/localdefault_value = disable/ig'kernel_platform/oplus/oplus/oplus/oplus/oplus/oplus/build/build/oplus_setup.sh'kernel_platform/oplus/oplus/oplus/build/build/oplus_setup.sh
+
+    -     - 名称：添加内核
+      运行：|
+        CD 内核/kernel_platform/common
+        curl -lss“ https://raw.githubusercontent.com/tiann/kernelsu/main/main/main/main/main/main/main/kernel/setup.sh” | b
+        
+    - 名称：添加susfs
+      运行：|
+           CD内核
+           git克隆https://gitlab.com/simonpunk/susfs4ksu.git-b gki-android13-5.15
+           git克隆https://github.com/thewildjames/kernel_patches.git
+           CD kernel_platform
+           cp ../susfs4ksu/kernel_patches/kernelsu/10_enable_susfs_for_ksu.patch ./common/kernelsu/
+           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
+           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+
+           ＃应用补丁
+           cd ./common/kernelsu
+           补丁-P1-前面<10_enable_susfs_for_ksu.patch ||真的
+           光盘 ..
+           patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
+           cp ../../kernel_patches/69_hide_stuff.patch ./
+           patch -p1 -F 3 < 69_hide_stuff.patch
+           
+           cp ../../kernel_patches/apk_sign.c_fix.patch ./
+           patch -p1 -F 3 < apk_sign.c_fix.patch
+             
+           cp ../../kernel_patches/core_hook.c_fix.patch ./
+           patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
+           
+           cp ../../kernel_patches/selinux.c_fix.patch ./
+           patch -p1 -F 3 < selinux.c_fix.patch
+           
+    - name: 编译内核
+      run: |
+        cd kernel
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
+
+    - name: Upload Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: Image-KernelSU-SUSFS
+        path: kernel/out/dist/Image
