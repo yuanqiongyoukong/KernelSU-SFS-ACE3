@@ -1,0 +1,88 @@
+名称：构建SM8550内核
+
+在：
+  工作流程_调度：
+
+
+工作：
+  
+  建造者：
+    
+    运行： ubuntu-latest
+
+    步骤：
+
+    -名称： 最大化建设空间
+      用途： Easimon/最大化构建空间@Master
+      和：
+        根-保留-MB ：8192
+        温度储备力-MB ：2048
+        删除dotnet ：'true'
+        删除Android：“true”
+        删除-哈斯尔：“真”
+：'真的'
+
+    -名称：配置git
+      运行：|
+         git config-“ yuanqiongyoukong”
+         git config -全局用户电子邮件“ 413722718@qq.com”
+    
+    -名称：安装编译环境
+      运行：|
+        sudo apt && sudo apt升级-y
+        sudo apt install ccache curl git repo python3 python-is-python3 -y
+
+    -名称：拉取OnePlus 12r
+      运行：|
+        mkdir内核&& cd内核
+        repo Init -u https：//github.com/oneplusoss/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml- = 1
+        回购同步-J $（nproc -all）
+        ＃sed -i '203a\export lto=thin' kernel_platform/oplus/build/oplus_setup.sh
+        ＃sed -i 's/s/s/s/extort repack_img = true/export repack_img = false/ig'kernel_platform/oplus/oplus/build/build/build/build /oplus_setup.shep.sh
+        
+        ＃sed -i 's/local default_value = none/local default_value = thin/ig'kernel_platform /oplus/oplus/build/build/build/oplus_setup.sh
+        # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh
+
+    - name :添加KernelSU Next
+      运行：|
+        cd 内核/kernel_platform/common
+        卷曲-LSs“https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh”| bash -s 下一个
+        
+    -名称：添加SUSFS
+      运行：|
+           宣传片资源
+           git 克隆 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+           git 克隆 https://github.com/thewildjames/kernel_patches.git
+           CD内核_平台
+           cp ../susfs4ksu/kernel_patches/kernelsu/10_enable_susfs_for_ksu.patch ./common/kernelsu-next/
+           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
+           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+
+           ＃应用程序
+           cd ./common/kernelsu-next
+           补丁-P1 - 前面<10_enable_susfs_for_ksu.patch ||真的
+           海报..
+           补丁-P1 <50_ADD_SUSFS_IN_GKI-ANDROID13-5.15.PATCH ||真的
+           cp ../../kernel_patches/69_hide_stuff.patch ./
+           补丁-p1 -f 3 <69_hide_stuff.patch
+           
+           cp ../../kernel_patches/apk_sign.c_fix.patch ./
+           补丁-p1 -F 3 < apk_sign.c_fix.patch
+             
+           cp ../../kernel_patches/core_hook.c_fix.patch ./
+           补丁-p1 --fuzz=3 < ./core_hook.c_fix.patch
+           
+           cp ../../kernel_patches/selinux.c_fix.patch ./
+           补丁-p1 -F 3 < selinux.c_fix.patch
+           
+    -名称：编译内核
+      运行：|
+        CD内核
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
+
+    -名称：上传图片
+      使用：Action/Action/upload-Artifact@v4
+      和：
+        名称：Image-Kernelsu_next-Susfs
+        路径：内核/out/dist/Image
