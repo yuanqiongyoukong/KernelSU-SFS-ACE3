@@ -46,7 +46,7 @@ jobs:
     - name: 添加KernelSU
       run: |
         cd kernel/kernel_platform/common
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash
         
     - name: 添加SUSFS
       run: |
@@ -54,7 +54,7 @@ jobs:
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
            git clone https://github.com/TheWildJames/kernel_patches.git
            cd kernel_platform
-           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU-Next/
+           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
