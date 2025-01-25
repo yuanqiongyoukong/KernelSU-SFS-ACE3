@@ -1,4 +1,4 @@
-name: 构建SM8550内核
+姓名：名称：构建SM8550内核
 
 on:
   workflow_dispatch:
@@ -8,12 +8,12 @@ jobs:
   
   build:
     
-    runs-on: ubuntu-latest
+    runs-on:     运行：ubuntu-latest
 
     steps:
 
-    - name: Maximize build space
-      uses: easimon/maximize-build-space@master
+    - name:     - 名称：最大化构建空间
+      uses:       使用：easimon/maximize-build-space@master
       with:
         root-reserve-mb: 8192
         temp-reserve-mb: 2048
@@ -22,38 +22,38 @@ jobs:
         remove-haskell: 'true'
         remove-codeql: 'true'
 
-    - name: Configure Git
-      run: |
-         git config --global user.name "Yxiguan"
-         git config --global user.email "2501608779@qq.com"
+    - name:     - 名称：配置 Git
+      运行：|
+         git config --全局用户名“ yuanqiongyoukong”
+         git配置-global user.email“ 413722718@qq.com”
     
-    - name: 安装编译环境
-      run: |
-        sudo apt update && sudo apt upgrade -y
-        sudo apt install ccache curl git repo python3 python-is-python3 -y
+    - 姓名：安装编译环境
+      运行：|
+        sudo apt && sudo apt升级-y
+        sudo apt安装ccache curl git repo python3 python-is-python3 -y
 
-    - name: 拉取oneplus 12r内核清单
-      run: |
-        mkdir kernel && cd kernel
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
-        repo sync -j$(nproc --all)
-        # sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh
+    - 姓名：拉取OnePlus 12r
+      运行：|
+        mkdir内核&& cd内核
+        repo Init -U https://github.com/oneplusoss/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml -depth = 1
+        repo sync -j $（nproc -all）
+        ＃sed -i'203a \ export lto = thin'kernel_platform /oplus/build/oplus_setup.sh
+        ＃sed -i 's/s/extort repack_img = true/export repack_img = false/ig'kernel_platform /oplus/oplus/build/build/oplus_setup.sh
         
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh
+        ＃sed -i 's/local default_value = none/local default_value = thin/ig'kernel_platform /oplus/oplus/build/build/build/oplus_setup.sh
         # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh
 
-    - name: 添加KernelSU Next
+    -姓名：- 名称：添加KernelSU Next
       run: |
         cd kernel/kernel_platform/common
         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
         
-    - name: 添加SUSFS
-      run: |
-           cd kernel
-           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-           git clone https://github.com/TheWildJames/kernel_patches.git
-           cd kernel_platform
+    - name:     - 名称：添加SUSFS
+      运行：|
+           光盘内核
+           git克隆 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
+           git 克隆 https://github.com/TheWildJames/kernel_patches.git
+           cd 内核平台
            cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU-Next/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
@@ -76,7 +76,7 @@ jobs:
            cp ../../kernel_patches/selinux.c_fix.patch ./
            patch -p1 -F 3 < selinux.c_fix.patch
            
-    - name: 编译内核
+    - name:     - 名称：编译内核
       run: |
         cd kernel
         ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
