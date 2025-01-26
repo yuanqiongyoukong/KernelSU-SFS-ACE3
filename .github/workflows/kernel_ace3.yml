@@ -46,7 +46,7 @@ jobs:
     - name: 添加KernelSU
       run: |
         cd kernel/kernel_platform/common
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
         
     - name: 添加SUSFS
       run: |
