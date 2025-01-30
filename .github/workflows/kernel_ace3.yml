@@ -67,7 +67,9 @@ jobs:
       run: |
         mkdir -p ${KERNEL_DIR} && cd ${KERNEL_DIR}
         repo init -u ${KERNEL_MANIFEST_URL} -b oneplus/${{ github.event.inputs.CPU  }} -m ${{ github.event.inputs.FEIL  }}.xml --depth=1 
-        repo sync -j$(nproc --all)
+        repo sync
+        rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
+        rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
         sed -i 's/ -dirty//g' common/scripts/setlocalversion msm-kernel/scripts/setlocalversion 
  
     - name: 添加 KernelSU Next 
