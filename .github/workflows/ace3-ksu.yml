@@ -1,4 +1,4 @@
-name: 构建 KernelSU Next SUSFS
+name: Build KernelSU Next SUSFS
 on:
   workflow_dispatch:
     inputs:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
  
     steps:
-      - name: 最大化构建空间
+      - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
           root-reserve-mb: 8192
@@ -38,42 +38,42 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
  
-      - name: 配置 Git
+      - name: Configure Git 
         run: |
          git config --global user.name  "yuanqiongyoukong"
          git config --global user.email  "413722718@qq.com" 
  
-      - name: 安装依赖
+      - name: Install dependencies 
         run: |
-         sudo apt update && sudo apt upgrade -y 
-         sudo apt install -y python3 git curl
+         sudo apt update && sudo apt upgrade -y
+         sudo apt install -y python3 git curl clang lld
  
-      - name: 安装 repo 工具
+      - name: Install repo tool
         run: |
          curl https://storage.googleapis.com/git-repo-downloads/repo  > ~/repo
-         chmod a+x ~/repo 
-         sudo mv ~/repo /usr/local/bin/repo 
+         chmod a+x ~/repo
+         sudo mv ~/repo /usr/local/bin/repo
  
-      - name: 初始化 repo 并同步
+      - name: Initialize repo and sync
         run: |
-         mkdir kernel_workspace && cd kernel_workspace
+         mkdir kernel_workspace && cd kernel_workspace 
          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b refs/heads/oneplus/${{ github.event.inputs.CPU  }} -m ${{ github.event.inputs.FEIL  }}.xml --depth=1
          repo sync
          rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
          rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
-         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion
+         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion 
          sed -i 's/ -dirty//g' kernel_platform/msm-kernel/scripts/setlocalversion
  
-      - name: 设置 KernelSU Next
+      - name: Set up KernelSU Next
         run: |
-         cd kernel_workspace/kernel_platform
+         cd kernel_workspace/kernel_platform 
          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"  | bash -s next
-         cd KernelSU-Next 
+         cd KernelSU-Next
          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile 
         
-      - name: 设置 susfs
+      - name: Set up susfs
         run: |
            cd kernel_workspace
            git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-${{ github.event.inputs.ANDROID_VERSION  }}-${{ github.event.inputs.KERNEL_VERSION  }}
@@ -84,7 +84,7 @@ jobs:
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
  
-           # 应用补丁 
+           # Apply patches 
            cd ./KernelSU-Next 
            patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true
            cd ../common 
@@ -105,30 +105,30 @@ jobs:
            cp ../kernel_patches/selinux.c_fix.patch  ./
            patch -p1 -F 3 < selinux.c_fix.patch 
  
-      - name: 在内核配置中启用 ThinLTO
+      - name: Enable ThinLTO in kernel configuration
         run: |
-         cd kernel_workspace/kernel_platform 
-         echo "CONFIG_THINLTO=y" >> .config
+         cd kernel_workspace/kernel_platform
+         echo "CONFIG_THINLTO=y" >> .config 
  
-      - name: 使用 ThinLTO 编译内核 
+      - name: Build kernel with ThinLTO
         run: |
-         cd kernel_workspace
-         make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="clang" LLVM=1 LLVM_IAS=1 LLVM thinlto
+         cd kernel_workspace/kernel_platform
+         make O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC=clang LD=ld.lld  LLVM=1 LLVM_IAS=1 THINLTO=1 -j$(nproc)
  
-      - name: 制作 AnyKernel3
+      - name: Make AnyKernel3
         run: |
          git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
          rm -rf ./AnyKernel3/.git 
          cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image ./AnyKernel3/
  
-      - name: 上传 AnyKernel3 
+      - name: Upload AnyKernel3
         uses: actions/upload-artifact@v4
         with:
          name: AnyKernel3_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
          path: ./AnyKernel3/*
  
-      - name: 上传 Image
-        uses: actions/upload-artifact@v4 
+      - name: Upload Image
+        uses: actions/upload-artifact@v4
         with:
          name: Image_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
          path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image
