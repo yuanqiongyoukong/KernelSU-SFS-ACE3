@@ -59,17 +59,12 @@ jobs:
       run: |
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
-        curl https://storage.googleapis.com/git-repo-downloads/repo  -o ~/repo 
-        chmod a+x ~/repo
-        sudo mv ~/repo /usr/local/bin/repo
  
     - name: 拉取内核清单
       run: |
         mkdir -p ${KERNEL_DIR} && cd ${KERNEL_DIR}
         repo init -u ${KERNEL_MANIFEST_URL} -b oneplus/${{ github.event.inputs.CPU  }} -m ${{ github.event.inputs.FEIL  }}.xml --depth=1 
         repo sync -j$(nproc --all)
-        rm -f ${KERNEL_DIR}/kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
-        rm -f ${KERNEL_DIR}/kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
         sed -i 's/ -dirty//g' common/scripts/setlocalversion msm-kernel/scripts/setlocalversion 
  
     - name: 添加 KernelSU Next 
