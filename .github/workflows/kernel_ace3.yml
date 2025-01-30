@@ -58,7 +58,10 @@ jobs:
     - name: 安装编译环境 
       run: |
         sudo apt update && sudo apt upgrade -y
-        sudo apt install ccache curl git repo python3 python-is-python3 -y
+        sudo apt install -y python3 git curl
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/repo
+        chmod a+x ~/repo
+        sudo mv ~/repo /usr/local/bin/repo
  
     - name: 拉取内核清单
       run: |
