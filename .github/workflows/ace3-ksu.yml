@@ -112,23 +112,23 @@ jobs:
  
       - name: Build kernel with ThinLTO
         run: |
-         cd kernel_workspace
+         cd kernel_workspace/kernel_platform
          make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="clang" LLVM=1 LLVM_IAS=1 LLVM_THINLTO=1
  
-      - name: Make AnyKernel3 
+      - name: Make AnyKernel3
         run: |
-         git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1 
+         git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
          rm -rf ./AnyKernel3/.git
          cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image ./AnyKernel3/
  
-      - name: Upload AnyKernel3
+      - name: Upload AnyKernel3 
         uses: actions/upload-artifact@v4
         with:
          name: AnyKernel3_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
          path: ./AnyKernel3/*
  
-      - name: Upload Image
+      - name: Upload Image 
         uses: actions/upload-artifact@v4
         with:
          name: Image_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
-         path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image 
+         path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image
