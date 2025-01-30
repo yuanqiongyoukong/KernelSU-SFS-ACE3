@@ -80,7 +80,6 @@ jobs:
       run: |
         cd kernel
         ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
-       lto=thin
 
     - name: Upload Image
       uses: actions/upload-artifact@v4
