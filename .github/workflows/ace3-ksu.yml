@@ -1,10 +1,10 @@
-name: Build KernelSU Next SUSFS
+name: Build KernelSU Next SUSFS 
 on:
   workflow_dispatch:
     inputs:
       CPU:
         description: "分支"
-        required: true 
+        required: true
         default: 'sm8550'
       FEIL:
         description: "配置文件"
@@ -16,7 +16,7 @@ on:
         default: 'kalama'
       ANDROID_VERSION:
         description: "内核安卓版本"
-        required: true
+        required: true 
         default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
@@ -25,14 +25,14 @@ on:
  
 jobs:
   build:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
  
     steps:
-      - name: Maximize build space 
-        uses: easimon/maximize-build-space@master 
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 8192 
-          temp-reserve-mb: 2048
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048 
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
@@ -46,9 +46,9 @@ jobs:
       - name: Install dependencies
         run: |
          sudo apt update && sudo apt upgrade -y
-         sudo apt install -y python3 git curl
+         sudo apt install -y python3 git curl 
  
-      - name: Install repo tool
+      - name: Install repo tool 
         run: |
          curl https://storage.googleapis.com/git-repo-downloads/repo  > ~/repo
          chmod a+x ~/repo
@@ -56,59 +56,28 @@ jobs:
  
       - name: Initialize repo and sync
         run: |
-         mkdir kernel_workspace && cd kernel_workspace 
+         mkdir kernel_workspace && cd kernel_workspace
          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b refs/heads/oneplus/${{ github.event.inputs.CPU  }} -m ${{ github.event.inputs.FEIL  }}.xml --depth=1
          repo sync
          rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
          rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
-         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion 
+         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion
          sed -i 's/ -dirty//g' kernel_platform/msm-kernel/scripts/setlocalversion
  
-      - name: List files in kernel_platform directory
+      - name: Set up KernelSU Next 
         run: |
          cd kernel_workspace/kernel_platform
-         ls -la
- 
-      - name: List files in common directory 
-        run: |
-         cd kernel_workspace/kernel_platform/common 
-         ls -la
- 
-      - name: List files in msm-kernel directory
-        run: |
-         cd kernel_workspace/kernel_platform/msm-kernel 
-         ls -la
- 
-      - name: Check for Makefile in common directory
-        run: |
-         cd kernel_workspace/kernel_platform/common
-         if [ ! -f Makefile ]; then 
-           echo "Error: Makefile not found in common directory."
-           exit 1
-         fi
- 
-      - name: Check for Makefile in msm-kernel directory
-        run: |
-         cd kernel_workspace/kernel_platform/msm-kernel
-         if [ ! -f Makefile ]; then
-           echo "Error: Makefile not found in msm-kernel directory."
-           exit 1
-         fi 
- 
-      - name: Set up KernelSU Next
-        run: |
-         cd kernel_workspace/kernel_platform
-         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"  | bash -s next 
+         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"  | bash -s next
          cd KernelSU-Next
          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
          sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-      - name: Set up susfs
+      - name: Set up susfs 
         run: |
            cd kernel_workspace
            git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-${{ github.event.inputs.ANDROID_VERSION  }}-${{ github.event.inputs.KERNEL_VERSION  }}
-           git clone https://github.com/TheWildJames/kernel_patches.git 
+           git clone https://github.com/TheWildJames/kernel_patches.git  
            cd kernel_platform
            cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch  ./KernelSU-Next/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION  }}-${{ github.event.inputs.KERNEL_VERSION  }}.patch ./common/
@@ -117,7 +86,7 @@ jobs:
  
            # Apply patches
            cd ./KernelSU-Next
-           patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true 
+           patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true
            cd ../common
            patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION  }}-${{ github.event.inputs.KERNEL_VERSION  }}.patch || true
            cp ../../kernel_patches/69_hide_stuff.patch  ./
@@ -134,32 +103,32 @@ jobs:
            patch -p1 --fuzz=3 < ./core_hook.c_fix.patch 
  
            cp ../kernel_patches/selinux.c_fix.patch  ./
-           patch -p1 -F 3 < selinux.c_fix.patch  
+           patch -p1 -F 3 < selinux.c_fix.patch 
  
-      - name: Enable ThinLTO in kernel configuration 
+      - name: Enable ThinLTO in kernel configuration
         run: |
          cd kernel_workspace/kernel_platform
          echo "CONFIG_THINLTO=y" >> .config
  
-      - name: Build kernel with ThinLTO 
+      - name: Build kernel with ThinLTO
         run: |
          cd kernel_workspace
-         make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="clang" LLVM=1 LLVM_IAS=1 LLVM thinlto
+         make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="clang" LLVM=1 LLVM_IAS=1 LLVM_THINLTO=1
  
-      - name: Make AnyKernel3
+      - name: Make AnyKernel3 
         run: |
-         git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
+         git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1 
          rm -rf ./AnyKernel3/.git
          cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image ./AnyKernel3/
  
       - name: Upload AnyKernel3
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v4
         with:
          name: AnyKernel3_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
          path: ./AnyKernel3/*
  
       - name: Upload Image
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v4
         with:
          name: Image_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL  }}
-         path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image
+         path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD  }}-gki/dist/Image 
