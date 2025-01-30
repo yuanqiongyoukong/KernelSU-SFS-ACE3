@@ -1,87 +1,82 @@
-name: 构建SM8550内核-KernelSU-SUS
-
+name: 构建SM8550内核-KernelSU-Next-SUS
+ 
 on:
   workflow_dispatch:
-
-
+ 
 jobs:
-  
   build:
-    
     runs-on: ubuntu-latest
-
+ 
     steps:
-
-    - name: Maximize build space
+    - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 8192
-        temp-reserve-mb: 2048
+        temp-reserve-mb: 2048 
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
         remove-codeql: 'true'
-
-    - name: Configure Git
+ 
+    - name: 配置 Git 
       run: |
-         git config --global user.name "yuanqiongyoukong"
-         git config --global user.email "413722718@qq.com"
-    
-    - name: 安装编译环境
+        git config --global user.name  "yuanqiongyoukong"
+        git config --global user.email  "413722718@qq.com" 
+ 
+    - name: 安装编译环境 
       run: |
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
-
-    - name: 拉取oneplus 12r内核清单
+ 
+    - name: 拉取 Oneplus 12R 内核清单 
       run: |
-        mkdir kernel && cd kernel
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
+        mkdir -p kernel && cd kernel
+        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b oneplus/sm8550 -m oneplus_12r_v.xml  --depth=1
         repo sync -j$(nproc --all)
-        # sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh
-        
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh
-
-    - name: 添加KernelSU
+ 
+    - name: 添加 KernelSU Next
       run: |
         cd kernel/kernel_platform/common
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        
-    - name: 添加SUSFS
+        curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh"  | bash -s next 
+ 
+    - name: 添加 SUSFS 
       run: |
-           cd kernel
-           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
-           cd kernel_platform
-           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/
-           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
-           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-
-           # Apply patches
-           cd ./common/KernelSU
-           patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-           cd ..
-           patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
-           cp ../../kernel_patches/69_hide_stuff.patch ./
-           patch -p1 -F 3 < 69_hide_stuff.patch
-           
-           cp ../../kernel_patches/apk_sign.c_fix.patch ./
-           patch -p1 -F 3 < apk_sign.c_fix.patch
-             
-           cp ../../kernel_patches/core_hook.c_fix.patch ./
-           patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-           
-           cp ../../kernel_patches/selinux.c_fix.patch ./
-           patch -p1 -F 3 < selinux.c_fix.patch
-           
+        cd kernel 
+        git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-android13-5.15
+        git clone https://github.com/TheWildJames/kernel_patches.git 
+        cd kernel_platform 
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch  ./common/KernelSU-Next/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch  ./common/
+        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+ 
+        # 应用补丁
+        cd ./common/KernelSU-Next
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true
+        cd ..
+        patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch  || true
+        cp ../../kernel_patches/69_hide_stuff.patch  ./
+        patch -p1 -F 3 < 69_hide_stuff.patch 
+        cp ../../kernel_patches/apk_sign.c_fix.patch  ./
+        patch -p1 -F 3 < apk_sign.c_fix.patch  
+        cp ../../kernel_patches/core_hook.c_fix.patch  ./
+        patch -p1 --fuzz=3 < ./core_hook.c_fix.patch 
+        cp ../../kernel_patches/selinux.c_fix.patch  ./
+        patch -p1 -F 3 < selinux.c_fix.patch 
+ 
+    - name: 修改内核构建脚本
+      run: |
+        cd kernel/kernel_platform/oplus/build
+        sed -i '203a\export LTO=thin' oplus_setup.sh  
+ 
     - name: 编译内核
       run: |
         cd kernel
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
-
-    - name: Upload Image
+        export LTO=thin
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh  kalama gki
+ 
+    - name: 上传镜像
       uses: actions/upload-artifact@v4
       with:
-        name: Image-KernelSU-SUSFS
+        name: Image-KernelSU_Next-SUSFS
         path: kernel/out/dist/Image
