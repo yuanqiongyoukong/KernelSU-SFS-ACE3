@@ -72,7 +72,7 @@ jobs:
     - name: 添加 KernelSU
       run: |
         cd ${{ env.KERNEL_DIR }}/kernel_platform/common
-        curl -LSs ${{ env.KERNELSU_URL }} | bash -
+        curl -LSs ${{ env.KERNELSU_URL }} | bash -s main
         cd ${{ env.KERNELSU_NAME }}
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) + 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
