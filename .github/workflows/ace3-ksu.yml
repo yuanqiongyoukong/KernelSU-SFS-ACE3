@@ -1,4 +1,4 @@
-name: Build KernelSU SUSFS
+name: Build KernelSU Next SUSFS
 on:
   workflow_dispatch:
     inputs:
@@ -37,14 +37,24 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
+          
+      - name: Checkout repository 
+        uses: actions/checkout@v2 
+
+      - name: Set up GCC 
+        uses: actions/setup-java@v2 
+        with:
+          java-version: '11'
+          distribution: 'adopt'
 
       - name: Configure Git
         run: |
-         git config --global user.name "build"
-         git config --global user.email "3436378798@qq.com"
+         git config --global user.name "yuanqiongyoukong"
+         git config --global user.email "413722718@qq.com"
 
       - name: Install dependencies
         run: |
+         sudo apt-get update && sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev
          sudo apt update && sudo apt upgrade -y
          sudo apt install -y python3 git curl
 
@@ -64,11 +74,11 @@ jobs:
          sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion
          sed -i 's/ -dirty//g' kernel_platform/msm-kernel/scripts/setlocalversion
 
-      - name: Set up KernelSU
+      - name: Set up KernelSU Next
         run: |
          cd kernel_workspace/kernel_platform
-         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-         cd KernelSU
+         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+         cd KernelSU-Next
          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
          sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
@@ -77,15 +87,15 @@ jobs:
         run: |
            cd kernel_workspace
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
-           git clone https://github.com/yuanqiongyoukong/kernel_patches.git
+           git clone https://github.com/TheWildJames/kernel_patches.git
            cd kernel_platform
-           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
            # Apply patches
-           cd ./KernelSU
+           cd ./KernelSU-Next
            patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
            cd ../common
            patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
@@ -94,6 +104,20 @@ jobs:
            git add -A && git commit -a -m "BUILD Kernel"
            cd ..
            cd ./msm-kernel && git add -A && git commit -a -m "BUILD Kernel"
+           cd ..
+             
+           cp ../kernel_patches/apk_sign.c_fix.patch ./
+           patch -p1 -F 3 < apk_sign.c_fix.patch
+             
+           cp ../kernel_patches/core_hook.c_fix.patch ./
+           patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
+           
+           cp ../kernel_patches/selinux.c_fix.patch ./
+           patch -p1 -F 3 < selinux.c_fix.patch
+
+      - name: Modify Makefile for ThinLTO 
+        run: |
+          sed -i 's/CFLAGS +=/CFLAGS += -flto=thin -fno-fat-lto-objects/' Makefile 
            
       - name: Build kernel
         run: |
@@ -109,11 +133,11 @@ jobs:
       - name: Upload AnyKernel3
         uses: actions/upload-artifact@v4
         with:
-         name: AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+         name: AnyKernel3_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
          path: ./AnyKernel3/*
 
       - name: Upload Image
         uses: actions/upload-artifact@v4
         with:
-         name: Image_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+         name: Image_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
          path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image
