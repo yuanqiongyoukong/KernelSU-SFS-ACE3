@@ -92,6 +92,7 @@ jobs:
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        
         # 应用补丁
         cd ./common/${KERNELSU_DIR}
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
@@ -113,6 +114,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
+        mkdir AnyKernel3 && cd AnyKernel3
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf ./AnyKernel3/.git
         cp kernel_workspace/out/dist/Image ./AnyKernel3/
