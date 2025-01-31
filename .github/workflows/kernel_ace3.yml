@@ -91,7 +91,7 @@ jobs:
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
-        # 启用补丁
+        # 应用补丁
         cd ${KERNELSU_NAME}
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true
         cd ../common 
@@ -116,9 +116,9 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        git clone ${{env.ANYKERNEL3_REPO}} --depth=1
-        rm -rf AnyKernel3/.git 
-        cp kernel_workspace/out/dist/Image ./AnyKernel3/
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
+        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
@@ -130,4 +130,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Image-${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}} 
-        path: kernel_workspace/out/dist/Image 
+        path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image 
