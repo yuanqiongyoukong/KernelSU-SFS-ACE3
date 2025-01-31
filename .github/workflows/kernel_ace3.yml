@@ -65,8 +65,8 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir -p ${KERNEL_DIR} && cd ${KERNEL_DIR}
-        repo init -u ${{KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
+        mkdir -p ${ KERNEL_DIR } && cd ${ KERNEL_DIR }
+        repo init -u ${{ KERNEL_MANIFEST_URL }} -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo sync
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
         # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh                 # 禁用图像打包
@@ -77,29 +77,29 @@ jobs:
         
     - name: 设置 KernelSU Next
       run: |
-        cd ${KERNEL_DIR}/kernel_platform
-        curl -LSs ${{KERNELSU_URL}} | bash -s next
-        cd ${KERNELSU_NAME}
+        cd ${ KERNEL_DIR }/kernel_platform
+        curl -LSs ${{ KERNELSU_URL }} | bash -s next
+        cd ${ KERNELSU_NAME }
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${ KSU_VERSION }/" kernel/Makefile
         
     - name: 添加 SUSFS
       run: |
-        cd ${KERNEL_DIR}
-        git clone ${{SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
-        git clone ${{PATCHES_REPO}}
+        cd ${ KERNEL_DIR }
+        git clone ${{ SUSFS_REPO }} -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
+        git clone ${{ PATCHES_REPO }}
         cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${KERNELSU_NAME}/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${ KERNELSU_NAME }/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 启用补丁
-        cd ./${KERNELSU_NAME}
+        cd ./${ KERNELSU_NAME }
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         cp ../kernel_patches/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
         cp ../kernel_patches/apk_sign.c_fix.patch ./
@@ -111,23 +111,23 @@ jobs:
         
     - name: 编译内核
       run: |
-        cd ${KERNEL_DIR}
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
+        cd ${ KERNEL_DIR }
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
         
     - name: 制作 AnyKernel3
       run: |
-        git clone ${{ANYKERNEL3_REPO}} --depth=1
+        git clone ${{ ANYKERNEL3_REPO }} --depth=1
         rm -rf AnyKernel3/.git
-        cp ${KERNEL_DIR}/out/dist/Image ./AnyKernel3/
+        cp ${ KERNEL_DIR }/out/dist/Image ./AnyKernel3/
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${KERNELSU_NAME}_${KSUVER}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3_${ KERNELSU_NAME }_${ KSUVER }_${{ github.event.inputs.FEIL }}
         path: ./AnyKernel3/*
         
     - name: 上传镜像
       uses: actions/upload-artifact@v4
       with:
-        name: Image-${KERNELSU_NAME}_${KSUVER}_${{github.event.inputs.FEIL}}
-        path: ${KERNEL_DIR}/out/dist/Image
+        name: Image-${ KERNELSU_NAME }_${ KSUVER }_${{ github.event.inputs.FEIL }}
+        path: ${ KERNEL_DIR }/out/dist/Image
