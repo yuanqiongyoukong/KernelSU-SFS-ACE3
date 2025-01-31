@@ -65,7 +65,7 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir ${ env.KERNEL_DIR } && cd ${ env.KERNEL_DIR }
+        mkdir -p ${ env.KERNEL_DIR } && cd ${ env.KERNEL_DIR }
         repo init -u ${{ env.KERNEL_MANIFEST_URL }} -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo sync
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
@@ -92,8 +92,8 @@ jobs:
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${ env.KERNELSU_NAME }/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 启用补丁
         cd ./${ env.KERNELSU_NAME }
