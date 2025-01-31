@@ -27,7 +27,7 @@ on:
 env:
   GIT_USER_NAME: yuanqiongyoukong
   GIT_USER_EMAIL: 413722718@qq.com
-  KERNEL_DIR: kernel
+  KERNEL_DIR: kernel_workspace
   KERNELSU_NAME: KernelSU-Next
   KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
   KERNELSU_URL: https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh
