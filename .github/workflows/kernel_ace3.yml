@@ -52,8 +52,8 @@ jobs:
         
     - name: 配置 Git
       run: |
-        git config --global user.name "${env.GIT_USER_NAME}"
-        git config --global user.email "${env.GIT_USER_EMAIL}"
+        git config --global user.name "${GIT_USER_NAME}"
+        git config --global user.email "${GIT_USER_EMAIL}"
         
     - name: 安装编译环境
       run: |
