@@ -1,5 +1,5 @@
-name: 构建 ACE3 内核
-
+name: 构建 ACE3 内核 
+ 
 on:
   workflow_dispatch:
     inputs:
@@ -26,14 +26,14 @@ on:
         
 env:
   GIT_USER_NAME: yuanqiongyoukong
-  GIT_USER_EMAIL: 413722718@qq.com
+  GIT_USER_EMAIL: 413722718@qq.com  
   KERNELSU_NAME: KernelSU-Next
-  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
-  KERNELSU_URL: https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh
-  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
-  PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git
-  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
-  
+  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git 
+  KERNELSU_URL: https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh 
+  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git 
+  PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git 
+  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3 
+ 
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 8192
-        temp-reserve-mb: 2048
+        temp-reserve-mb: 2048 
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -51,30 +51,27 @@ jobs:
         
     - name: 配置 Git
       run: |
-        git config --global user.name "${GIT_USER_NAME}"
-        git config --global user.email "${GIT_USER_EMAIL}"
+        git config --global user.name  "${GIT_USER_NAME}"
+        git config --global user.email  "${GIT_USER_EMAIL}"
         
     - name: 安装编译环境
       run: |
-        sudo apt update && sudo apt upgrade -y
+        sudo apt update && sudo apt upgrade -y 
         sudo apt install -y python3 git curl
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/repo
+        curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo 
         chmod a+x ~/repo
         sudo mv ~/repo /usr/local/bin/repo
         
     - name: 拉取内核清单
       run: |
-        mkdir kernel_workspace && cd kernel_workspace
-        repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
-        repo sync
-        sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh                 # 禁用图像打包
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh              # 设置默认值为thin
-        # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh         # 设置默认值为禁用
+        mkdir -p kernel_workspace && cd kernel_workspace 
+        repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}}  -m ${{github.event.inputs.FEIL}}.xml  --depth=1 
+        repo sync 
+        sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh 
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
         
-    - name: 设置 KernelSU Next
+    - name: 设置 KernelSU Next 
       run: |
         cd kernel_workspace/kernel_platform
         curl -LSs ${{env.KERNELSU_URL}} | bash -s next
@@ -85,52 +82,52 @@ jobs:
         
     - name: 添加 SUSFS
       run: |
-        cd kernel_workspace
-        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
+        cd kernel_workspace 
+        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}} 
         git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${KERNELSU_NAME}/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch  ./${KERNELSU_NAME}/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch  ./common/
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 启用补丁
-        cd /${KERNELSU_NAME}
-        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-        cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
-        cp ../../kernel_patches/69_hide_stuff.patch ./
-        patch -p1 -F 3 < 69_hide_stuff.patch
+        cd ${KERNELSU_NAME}
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || true
+        cd ../common 
+        patch -p1 < 50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch  || true 
+        cp ../../kernel_patches/69_hide_stuff.patch  ./
+        patch -p1 -F 3 < 69_hide_stuff.patch 
         git add -A && git commit -a -m "BUILD Kernel"
         cd ..
         cd ./msm-kernel && git add -A && git commit -a -m "BUILD Kernel"
         cd ..
-        cp ../kernel_patches/apk_sign.c_fix.patch ./
-        patch -p1 -F 3 < apk_sign.c_fix.patch
-        cp ../kernel_patches/core_hook.c_fix.patch ./
-        patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-        cp ../kernel_patches/selinux.c_fix.patch ./
-        patch -p1 -F 3 < selinux.c_fix.patch
+        cp ../kernel_patches/apk_sign.c_fix.patch  ./
+        patch -p1 -F 3 < apk_sign.c_fix.patch  
+        cp ../kernel_patches/core_hook.c_fix.patch  ./
+        patch -p1 --fuzz=3 < ./core_hook.c_fix.patch 
+        cp ../kernel_patches/selinux.c_fix.patch  ./
+        patch -p1 -F 3 < selinux.c_fix.patch 
         
     - name: 编译内核
       run: |
         cd kernel_workspace
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh  ${{github.event.inputs.CPUD}}  gki
         
     - name: 制作 AnyKernel3
       run: |
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
-        rm -rf AnyKernel3/.git
+        rm -rf AnyKernel3/.git 
         cp kernel_workspace/out/dist/Image ./AnyKernel3/
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3_${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}} 
         path: ./AnyKernel3/*
         
     - name: 上传镜像
       uses: actions/upload-artifact@v4
       with:
-        name: Image-${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: kernel_workspace/out/dist/Image
+        name: Image-${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}} 
+        path: kernel_workspace/out/dist/Image 
