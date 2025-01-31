@@ -68,9 +68,6 @@ jobs:
         mkdir -p ${KERNEL_DIR} && cd ${KERNEL_DIR}
         repo init -u ${KERNEL_MANIFEST_URL} -b oneplus/${{ github.event.inputs.CPU  }} -m ${{ github.event.inputs.FEIL  }}.xml --depth=1 
         repo sync
-        rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
-        rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
-        sed -i 's/ -dirty//g' common/scripts/setlocalversion msm-kernel/scripts/setlocalversion 
  
     - name: 添加 KernelSU Next 
       run: |
@@ -107,6 +104,10 @@ jobs:
  
     - name: 编译内核 
       run: |
+        cd ${KERNEL_DIR}/kernel_platform
+        rm common/android/abi_gki_protected_exports_* || echo "No protected exports!"
+        rm msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
+        sed -i 's/ -dirty//g' common/scripts/setlocalversion msm-kernel/scripts/setlocalversion
         cd ${KERNEL_DIR}/kernel_platform/oplus/build 
         sed -i '203a\export LTO=thin' oplus_setup.sh   
         cd ${KERNEL_DIR}
