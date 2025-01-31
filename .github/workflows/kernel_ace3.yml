@@ -95,7 +95,7 @@ jobs:
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 启用补丁
-        cd ./common/${KERNELSU_NAME}
+        cd ./${KERNELSU_NAME}
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ..
         patch -p1 < 50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch || true
