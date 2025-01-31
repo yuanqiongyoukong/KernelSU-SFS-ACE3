@@ -65,7 +65,7 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir -p ${env.KERNEL_DIR} && cd ${env.KERNEL_DIR}
+        mkdir ${env.KERNEL_DIR} && cd ${env.KERNEL_DIR}
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo sync
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
