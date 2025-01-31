@@ -123,11 +123,11 @@ jobs:
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${ env.KERNELSU_NAME }_${ KSUVER }_${{ github.event.inputs.FEIL }}
+        name: AnyKernel3_${ env.KERNELSU_NAME }_${ env.KSUVER }_${{ github.event.inputs.FEIL }}
         path: ./AnyKernel3/*
         
     - name: 上传镜像
       uses: actions/upload-artifact@v4
       with:
-        name: Image-${ env.KERNELSU_NAME }_${ KSUVER }_${{ github.event.inputs.FEIL }}
+        name: Image-${ env.KERNELSU_NAME }_${ env.KSUVER }_${{ github.event.inputs.FEIL }}
         path: ${ env.KERNEL_DIR }/out/dist/Image
