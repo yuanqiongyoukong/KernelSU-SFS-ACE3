@@ -89,7 +89,7 @@ jobs:
         git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
         git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${KERNELSU_NAME}/
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./kernel/${KERNELSU_NAME}/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
