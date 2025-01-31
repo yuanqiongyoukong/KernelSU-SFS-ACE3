@@ -79,7 +79,7 @@ jobs:
       run: |
         cd ${KERNEL_DIR}/kernel_platform
         curl -LSs ${{env.KERNELSU_URL}} | bash -s next
-        cd ${env.KERNELSU_NAME}
+        cd ${KERNELSU_NAME}
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${env.KSU_VERSION}/" kernel/Makefile
@@ -90,13 +90,13 @@ jobs:
         git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
         git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/${env.KERNELSU_NAME}/
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/${KERNELSU_NAME}/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
         cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 启用补丁
-        cd ./common/${env.KERNELSU_NAME}
+        cd ./common/${KERNELSU_NAME}
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ..
         patch -p1 < 50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch || true
@@ -123,11 +123,11 @@ jobs:
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${env.KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3_${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
         path: ./AnyKernel3/*
         
     - name: 上传镜像
       uses: actions/upload-artifact@v4
       with:
-        name: Image-${env.KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        name: Image-${KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
         path: ${KERNEL_DIR}/out/dist/Image
