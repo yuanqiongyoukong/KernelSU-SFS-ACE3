@@ -65,7 +65,7 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir ${env.KERNEL_DIR} && cd ${env.KERNEL_DIR}
+        mkdir ${KERNEL_DIR} && cd ${KERNEL_DIR}
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo sync
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
@@ -77,7 +77,7 @@ jobs:
         
     - name: 设置 KernelSU Next
       run: |
-        cd ${env.KERNEL_DIR}/kernel_platform
+        cd ${KERNEL_DIR}/kernel_platform
         curl -LSs ${{env.KERNELSU_URL}} | bash -s next
         cd ${env.KERNELSU_NAME}
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
@@ -86,7 +86,7 @@ jobs:
         
     - name: 添加 SUSFS
       run: |
-        cd ${env.KERNEL_DIR}
+        cd ${KERNEL_DIR}
         git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
         git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
@@ -111,14 +111,14 @@ jobs:
         
     - name: 编译内核
       run: |
-        cd ${env.KERNEL_DIR}
+        cd ${KERNEL_DIR}
         ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
         
     - name: 制作 AnyKernel3
       run: |
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf AnyKernel3/.git
-        cp ${env.KERNEL_DIR}/out/dist/Image ./AnyKernel3/
+        cp ${KERNEL_DIR}/out/dist/Image ./AnyKernel3/
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
@@ -130,4 +130,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Image-${env.KERNELSU_NAME}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: ${env.KERNEL_DIR}/out/dist/Image
+        path: ${KERNEL_DIR}/out/dist/Image
