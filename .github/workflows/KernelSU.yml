@@ -49,21 +49,20 @@ jobs:
         remove-haskell: 'true'
         remove-codeql: 'true'
         
-    - name: 配置 Git
+    - name: 安装编译环境
       run: |
         git config --global user.name "${GIT_USER_NAME}"
         git config --global user.email "${GIT_USER_EMAIL}"
-        
-    - name: 安装编译环境
-      run: |
         sudo apt update && sudo apt upgrade -y && sudo apt install -y python3 git curl
         curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo
         chmod a+x ~/repo
         sudo mv ~/repo /usr/local/bin/repo
+        mkdir kernel_workspace && cd kernel_workspace
+        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
+        git clone ${{env.PATCHES_REPO}}
         
     - name: 拉取内核清单
       run: |
-        mkdir kernel_workspace && cd kernel_workspace
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo sync
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
@@ -84,9 +83,6 @@ jobs:
         
     - name: 添加 SUSFS
       run: |
-        cd kernel_workspace
-        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
-        git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/${KERNELSU_DIR}/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
@@ -98,7 +94,7 @@ jobs:
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ..
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
-        cd ../../../
+        cd ../../kernel_patches/
         sed -i -e 's/KernelSU-Next/KernelSU/g' apk_sign.c_fix.patch  core_hook.c_fix.patch  selinux.c_fix.patch 
         cp 69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
