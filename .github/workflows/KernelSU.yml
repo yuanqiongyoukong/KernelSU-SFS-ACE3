@@ -35,7 +35,7 @@ env:
   SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
   PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git
   ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
-  BUILD_KERNEL: kernel_platform/oplus/build/oplus_setup.sh
+  BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   UPLOAD_IMAGE: kernel_workspace/out/dist/Image
   UPLOAD_ANYKERNEL3: AnyKernel3
   
@@ -72,11 +72,10 @@ jobs:
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo sync
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
-        sed -i 's/ -dirty//g' ${{env.PLATFORM_DIR}}/common/scripts/setlocalversion ${{env.PLATFORM_DIR}}/msm-kernel/scripts/setlocalversion
-        sed -i '203a\export LTO=thin' ${{env.PLATFORM_DIR}}/${{env.BUILD_KERNEL}}                                                # 启用ThinLTO优化
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' ${{env.PLATFORM_DIR}}/${{env.BUILD_KERNEL}}                 # 禁用图像打包
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' ${{env.PLATFORM_DIR}}/${{env.BUILD_KERNEL}}              # 设置默认值为thin
-        # sed -i 's/local default_value=enable/local default_value=disable/Ig' ${{env.PLATFORM_DIR}}/${{env.BUILD_KERNEL}}         # 设置默认值为禁用
+        sed -i '203a\export LTO=thin' ${{env.PLATFORM_DIR}}/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
+        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' ${{env.PLATFORM_DIR}}/oplus/build/oplus_setup.sh                 # 禁用图像打包
+        # sed -i 's/local default_value=none/local default_value=thin/Ig' ${{env.PLATFORM_DIR}}/oplus/build/oplus_setup.sh              # 设置默认值为thin
+        # sed -i 's/local default_value=enable/local default_value=disable/Ig' ${{env.PLATFORM_DIR}}/oplus/build/oplus_setup.sh         # 设置默认值为禁用
         
     - name: 设置 KernelSU
       run: |
