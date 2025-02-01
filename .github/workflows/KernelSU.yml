@@ -37,7 +37,7 @@ env:
   ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
   BUILD_KERNEL: kernel_platform/oplus/build/oplus_setup.sh
   UPLOAD_IMAGE: kernel_workspace/out/dist/Image
-  UPLOAD_ANYKERNEL3: ./AnyKernel3/*
+  UPLOAD_ANYKERNEL3: AnyKernel3.zip
   
 jobs:
   build:
@@ -129,10 +129,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: AnyKernel3_${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: ${{UPLOAD_ANYKERNEL3}}
+        path: ./${{UPLOAD_ANYKERNEL3}}
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
         name: Image-${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: ${{env.UPLOAD_IMAGE}}
+        path: ./${{env.UPLOAD_IMAGE}}
