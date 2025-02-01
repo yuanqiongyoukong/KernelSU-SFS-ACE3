@@ -32,7 +32,7 @@ jobs:
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
 
-    - name: 拉取oneplus 12r内核清单
+    - name: 拉取oneplus ace3内核清单
       run: |
         mkdir kernel && cd kernel
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_ace3_v.xml --depth=1
