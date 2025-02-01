@@ -126,7 +126,7 @@ jobs:
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${env.KSU_DIR}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3-${env.KSU_DIR}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_AK3}}
         
     - name: 上传 Image
