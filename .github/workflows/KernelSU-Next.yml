@@ -117,15 +117,32 @@ jobs:
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf ./AnyKernel3/.git
         cp kernel/out/dist/Image ./AnyKernel3/
+        continue-on-error: true
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
         name: AnyKernel3_${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
         path: ./AnyKernel3/*
+        continue-on-error: true 
         
-    - name: 上传 Image
+    - name: 上传 Image 1
       uses: actions/upload-artifact@v4
       with:
         name: Image-${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: kernel/out/dist/Image
+        path: kernel//kernel_platform/out/msm-kernel-kalama-gki/dist/Image
+        continue-on-error: true 
+        
+    - name: 上传 Image 2
+      uses: actions/upload-artifact@v4
+      with:
+        name: Image-${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        path: kernel/device/qcom/kalama-kernel/Image
+        continue-on-error: true 
+        
+    - name: 上传 Image 3
+      uses: actions/upload-artifact@v4
+      with:
+        name: Image-${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        path: kernel/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
+        continue-on-error: true 
