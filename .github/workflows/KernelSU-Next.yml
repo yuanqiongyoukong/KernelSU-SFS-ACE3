@@ -122,4 +122,3 @@ jobs:
       with:
         name: Image-${KSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_IMGL}}
-        continue-on-error: true 
