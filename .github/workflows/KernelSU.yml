@@ -69,7 +69,7 @@ jobs:
       run: |
         mkdir ${{env.WORK_DIR}} && cd ${{env.WORK_DIR}}
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
-        repo sync
+        repo sync -j$(nproc --all)
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ${{env.PLAT_DIR}}/common/scripts/setlocalversion ${{env.PLAT_DIR}}/msm-kernel/scripts/setlocalversion
         sed -i '203a\export LTO=thin' ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
