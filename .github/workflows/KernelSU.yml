@@ -34,7 +34,7 @@ env:
   KSU_DIR: KernelSU
   WORK_DIR: kernel_workspace
   PLAT_DIR: kernel_platform
-  BUILD_KERNL: kernel_platform/oplus/build/oplus_build_kernel.sh
+  BUILD_KERNL: oplus/build/oplus_build_kernel.sh
   UP_AK3: AnyKernel3
   UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
   
@@ -105,7 +105,7 @@ jobs:
     - name: 编译内核
       run: |
         cd ${{env.WORK_DIR}}
-        ./${{env.BUILD_KERNEL}} ${{github.event.inputs.CPUD}} gki
+        ./${{env.PLAT_DIR}}/${{env.BUILD_KERNEL}} ${{github.event.inputs.CPUD}} gki
 
     - name: 制作 AnyKernel3
       run: |
