@@ -25,9 +25,6 @@ on:
         default: '5.15'
         
 env:
-  KERNELSU_DIR: KernelSU
-  WORKSPACE_DIR: kernel_workspace
-  PLATFORM_DIR: kernel_platform
   GIT_USER_NAME: yuanqiongyoukong
   GIT_USER_EMAIL: 413722718@qq.com
   KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
@@ -35,6 +32,9 @@ env:
   SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
   ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
   BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
+  KERNELSU_DIR: KernelSU
+  WORKSPACE_DIR: kernel_workspace
+  PLATFORM_DIR: kernel_platform
   UPLOAD_ANYKERNEL3: AnyKernel3
   UPLOAD_IMAGE: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
   
