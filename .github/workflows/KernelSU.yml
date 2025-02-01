@@ -36,7 +36,7 @@ env:
   PLAT_DIR: kernel_platform
   BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   UP_AK3: AnyKernel3
-  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
+  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/Image
   
 jobs:
   build:
@@ -112,17 +112,15 @@ jobs:
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf ./AnyKernel3/.git
         cp ${{env.UP_IMG}} ./AnyKernel3/
-      continue-on-error: true 
-      
+        
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${KSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3_${env.KSU_DIR}_${KSUVER}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_AK3}}
-      continue-on-error: true 
-      
+        
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image-${KSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        name: Image-${env.KSU_DIR}_${KSUVER}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_IMG}}
