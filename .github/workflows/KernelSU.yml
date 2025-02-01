@@ -31,10 +31,10 @@ env:
   KERNELSU_URL: https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh
   SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
   ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
-  BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   KERNELSU_DIR: KernelSU
   WORKSPACE_DIR: kernel_workspace
   PLATFORM_DIR: kernel_platform
+  BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   UPLOAD_ANYKERNEL3: AnyKernel3
   UPLOAD_IMAGE: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
   
