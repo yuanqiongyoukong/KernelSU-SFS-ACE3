@@ -114,6 +114,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
+        cd kernel_workspace
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         cp ./out/dist/Image ./AnyKernel3/Image
         
