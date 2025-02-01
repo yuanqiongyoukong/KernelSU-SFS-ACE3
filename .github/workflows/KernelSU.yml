@@ -33,7 +33,6 @@ env:
   KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
   KERNELSU_URL: https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh
   SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
-  PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git
   ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
   BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   UPLOAD_ANYKERNEL3: AnyKernel3
@@ -90,8 +89,6 @@ jobs:
       run: |
         cd ${{env.WORKSPACE_DIR}}
         git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
-        git clone ${{env.PATCHES_REPO}}
-        sed -i -e 's/KernelSU-Next/KernelSU/g' kernel_patches/apk_sign.c_fix.patch kernel_patches/core_hook.c_fix.patch kernel_patches/selinux.c_fix.patch
         cd ${{env.PLATFORM_DIR}}
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/${KERNELSU_DIR}/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
@@ -103,15 +100,7 @@ jobs:
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ..
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
-        cp ../../kernel_patches/69_hide_stuff.patch ./
-        patch -p1 -F 3 < 69_hide_stuff.patch
-        cp ../../kernel_patches/apk_sign.c_fix.patch ./
-        patch -p1 -F 3 < apk_sign.c_fix.patch
-        cp ../../kernel_patches/core_hook.c_fix.patch ./
-        patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-        cp ../../kernel_patches/selinux.c_fix.patch ./
-        patch -p1 -F 3 < selinux.c_fix.patch
-        
+
     - name: 编译内核
       run: |
         cd ${{env.WORKSPACE_DIR}}
