@@ -121,4 +121,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Image-${KSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
-        path: ${{env.UP_IMGL}}
+        path: ${{env.UP_IMG}}
