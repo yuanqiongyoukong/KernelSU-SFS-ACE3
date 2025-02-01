@@ -63,7 +63,7 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir kernel_workspace && cd kernel_workspace
+        mkdir kernel && cd kernel
         repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo sync
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
@@ -75,7 +75,7 @@ jobs:
         
     - name: 设置 KernelSU Next
       run: |
-        cd kernel_workspace/kernel_platform/common
+        cd kernel/kernel_platform/common
         curl -LSs ${{env.KERNELSU_URL}} | bash -s next
         cd ${KERNELSU_DIR}
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
@@ -84,7 +84,7 @@ jobs:
         
     - name: 添加 SUSFS
       run: |
-        cd kernel_workspace
+        cd kernel
         git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
         git clone ${{env.PATCHES_REPO}}
         cd kernel_platform
@@ -109,11 +109,23 @@ jobs:
         
     - name: 编译内核
       run: |
-        cd kernel_workspace
+        cd kernel
         ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
 
+    - name: 制作 AnyKernel3
+      run: |
+        git clone ${{env.ANYKERNEL3_REPO}} --depth=1
+        rm -rf ./AnyKernel3/.git
+        cp kernel/out/dist/Image ./AnyKernel3/
+        
+    - name: 上传 AnyKernel3
+      uses: actions/upload-artifact@v4
+      with:
+        name: AnyKernel3_${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        path: ./AnyKernel3/*
+        
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-       name: Image_KernelSU_Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
-       path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image
+        name: Image-${KERNELSU_DIR}_${env.KSUVER}_${{github.event.inputs.FEIL}}
+        path: kernel/out/dist/Image
