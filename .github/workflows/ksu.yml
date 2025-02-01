@@ -85,7 +85,6 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
         cp kernel/out/dist/Image AnyKernel3
         
     - name: 上传 AnyKernel3
