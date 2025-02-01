@@ -37,7 +37,7 @@ env:
   PLAT_DIR: kernel_platform
   BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
   UP_AK3: AnyKernel3
-  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/dist/Image
+  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/Image
   
 jobs:
   build:
