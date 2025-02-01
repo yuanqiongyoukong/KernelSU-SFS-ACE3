@@ -28,7 +28,7 @@ env:
   KERNELSU_DIR: KernelSU
   WORKSPACE_DIR: kernel_workspace
   PLATFORM_DIR: kernel_platform
-  BUILD_KERNEL: oplus/build/oplus_setup.sh
+  BUILD_KERNEL: kernel_platform/oplus/build/oplus_setup.sh
   UPLOAD_IMAGE: kernel_workspace/out/dist/Image
   UPLOAD_ANYKERNEL3: ./AnyKernel3/*
   GIT_USER_NAME: yuanqiongyoukong
@@ -117,13 +117,13 @@ jobs:
     - name: 编译内核
       run: |
         cd ${{env.WORKSPACE_DIR}}
-        ./${{env.PLATFORM_DIR}}/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
+        ./${{env.BUILD_KERNEL}} ${{github.event.inputs.CPUD}} gki
 
     - name: 制作 AnyKernel3
       run: |
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf ./AnyKernel3/.git
-        cp ${{env.WORKSPACE_DIR}}/out/dist/Image ./AnyKernel3/Image
+        cp ${{env.UPLOAD_IMAGE}} ./AnyKernel3/Image
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
