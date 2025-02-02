@@ -54,13 +54,10 @@ jobs:
         remove-haskell: 'true'
         remove-codeql: 'true'
         
-    - name: 配置 Git
+    - name: 初始化编译环境
       run: |
         git config --global user.name "${GIT_USER_NAME}"
         git config --global user.email "${GIT_USER_EMAIL}"
-        
-    - name: 安装编译环境
-      run: |
         sudo apt update && sudo apt upgrade -y && sudo apt install -y python3 git curl
         curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo
         chmod a+x ~/repo
@@ -95,8 +92,8 @@ jobs:
         cd ${{env.PLAT_DIR}}
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/${KSU_DIR}/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
-        cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-        cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
         # 应用补丁
         cd ./common/${KSU_DIR}
