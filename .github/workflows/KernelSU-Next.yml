@@ -120,17 +120,19 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
-        rm -rf ./AnyKernel3/.git
         cp ${{env.UP_IMG}} ${{env.UP_AK3}}
+      continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
         name: AnyKernel3-${{env.KSU_DIR}}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_AK3}}
+      continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
         name: Image-${{env.KSU_DIR}}_${{github.event.inputs.FEIL}}
         path: ${{env.UP_IMG}}
+      continue-on-error: true 
