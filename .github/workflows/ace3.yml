@@ -52,13 +52,13 @@ jobs:
         SUSFS_DIR=susfs4ksu
         PATCH_DIR=kernel_patches
         cd kernel_platform
-        cp../$SUSFS_DIR/$PATCH_DIR/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU-Next/ 
+        cp../$SUSFS_DIR/$PATCH_DIR/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/ 
         cp../$SUSFS_DIR/$PATCH_DIR/50_add_susfs_in_gki-android13-5.15.patch ./common/ 
         cp -r../$SUSFS_DIR/$PATCH_DIR/fs/* ./common/fs/
         cp -r../$SUSFS_DIR/$PATCH_DIR/include/linux/* ./common/include/linux/
 
         # Apply patches
-        cd./common/KernelSU-Next
+        cd./common/KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || { echo "Patch 10_enable_susfs_for_ksu.patch  failed"; exit 1; }
         cd..
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch  || { echo "Patch 50_add_susfs_in_gki-android13-5.15.patch  failed"; exit 1; }
