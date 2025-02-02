@@ -73,7 +73,7 @@ jobs:
       run: |
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf./AnyKernel3/.git ./AnyKernel3/LICENSE
-        cp ./out/dist/Image ./AnyKernel3/
+        cp out/dist/Image AnyKernel3/
       continue-on-error: true 
 
     - name: 上传 AnyKernel3
