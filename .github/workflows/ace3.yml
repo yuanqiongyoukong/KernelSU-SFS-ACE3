@@ -53,9 +53,9 @@ jobs:
         cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
         # Apply patches
-        cd./common/KernelSU
+        cd ./common/KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-        cd..
+        cd ..
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
 
     - name: 编译内核
