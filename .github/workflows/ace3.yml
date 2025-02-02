@@ -27,8 +27,7 @@ jobs:
 
     - name: 拉取内核清单及相关操作
       run: |
-        KERNEL_DIR=kernel
-        mkdir -p $KERNEL_DIR && cd $KERNEL_DIR
+        mkdir -p kernel && cd kernel
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b oneplus/sm8550 -m oneplus_12r_v.xml  --depth=1
         repo sync -j$(nproc --all)
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null
@@ -45,17 +44,13 @@ jobs:
         
     - name: 添加 SUSFS
       run: |
-        KERNEL_DIR=kernel
-        cd $KERNEL_DIR
+        cd kernel
         git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-android13-5.15
-        git clone https://github.com/TheWildJames/kernel_patches.git 
-        SUSFS_DIR=susfs4ksu
-        PATCH_DIR=kernel_patches
         cd kernel_platform
-        cp../$SUSFS_DIR/$PATCH_DIR/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/ 
-        cp../$SUSFS_DIR/$PATCH_DIR/50_add_susfs_in_gki-android13-5.15.patch ./common/ 
-        cp -r../$SUSFS_DIR/$PATCH_DIR/fs/* ./common/fs/
-        cp -r../$SUSFS_DIR/$PATCH_DIR/include/linux/* ./common/include/linux/
+        cp../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/ 
+        cp../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/ 
+        cp -r../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp -r../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
         # Apply patches
         cd./common/KernelSU
