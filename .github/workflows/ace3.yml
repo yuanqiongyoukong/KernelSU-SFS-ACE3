@@ -26,23 +26,23 @@ on:
 
 env:
   GIT_USER_NAME: yuanqiongyoukong 
-  GIT_USER_EMAIL: 413722718@qq.com   
-  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git   
-  KERNELSU_URL: https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh   
-  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git   
-  PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git   
-  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3   
+  GIT_USER_EMAIL: 413722718@qq.com  
+  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git  
+  KERNELSU_URL: https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh  
+  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git  
+  PATCHES_REPO: https://github.com/TheWildJames/kernel_patches.git  
+  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3  
   KSU_DIR: KernelSU-Next 
   WORK_DIR: kernel_workspace 
   PLAT_DIR: kernel_platform 
-  BUILD_KERNEL: oplus/build/oplus_build_kernel.sh   
+  BUILD_KERNEL: oplus/build/oplus_build_kernel.sh  
   UP_AK3: kernel_workspace/AnyKernel3 
   UP_IMG: kernel_workspace/out/dist/Image 
 
 jobs:
   build:
     runs-on: ubuntu-latest 
-    
+
     steps:
     - name: 最大化构建空间 
       uses: easimon/maximize-build-space@master 
@@ -57,34 +57,31 @@ jobs:
     - name: 初始化编译环境 
       run: |
         # 配置Git用户信息 
-        git config --global user.name  "$GIT_USER_NAME"
-        git config --global user.email  "$GIT_USER_EMAIL"
+        git config --global user.name  "${GIT_USER_NAME}"
+        git config --global user.email  "${GIT_USER_EMAIL}"
         
         # 更新系统包并安装必要的工具 
         sudo apt update && sudo apt install -y python3 git curl gcc make 
         
         # 安装Repo工具 
-        curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo   
+        curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo  
         chmod a+x ~/repo 
         sudo mv ~/repo /usr/local/bin/repo 
-
+ 
     - name: 拉取内核清单 
       run: |
-        WORK_DIR="$env.WORK_DIR"
-        KERNEL_MANIFEST_URL="$env.KERNEL_MANIFEST_URL"
-        CPU="$github.event.inputs.CPU" 
-        FEIL="$github.event.inputs.FEIL" 
-        PLAT_DIR="$env.PLAT_DIR"
+        # 创建工作目录并进入 
+        mkdir -p ${{env.WORK_DIR}} && cd ${{env.WORK_DIR}}
         
-        mkdir -p "$WORK_DIR" && cd "$WORK_DIR"
-        
-        repo init -u "$KERNEL_MANIFEST_URL" \
-                  -b refs/heads/oneplus/"$CPU"  \
-                  -m "$FEIL".xml  \
+        # 初始化内核仓库 
+        repo init -u ${{env.KERNEL_MANIFEST_URL}} \
+                  -b refs/heads/oneplus/${{github.event.inputs.CPU}}  \
+                  -m ${{github.event.inputs.FEIL}}.xml  \
                   --depth=1 \
                   --single-branch \
                   --reference-only 
         
+        # 同步代码仓库 
         repo sync -j$(nproc --all) \
                   --current-branch \
                   --no-tags \
@@ -92,19 +89,23 @@ jobs:
                   --prune-empty-dirs \
                   --force-broken-repos 
         
+        # 删除不必要的文件 
         rm -f common/android/abi_gki_protected_exports_* \
-              msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
+              msm-kernel/android/abi_gki_protected_exports_* \
+              2>/dev/null || echo "No protected exports found!"
         
-        sed -i 's/ -dirty//g' "$PLAT_DIR"/common/scripts/setlocalversion \
-              "$PLAT_DIR"/msm-kernel/scripts/setlocalversion 
+        # 修改版本控制脚本 
+        sed -i 's/ -dirty//g' ${{env.PLAT_DIR}}/common/scripts/setlocalversion \
+              ${{env.PLAT_DIR}}/msm-kernel/scripts/setlocalversion 
         
+        # 启用ThinLTO优化 
         sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' \
-              "$PLAT_DIR"/oplus/build/oplus_setup.sh   
+              ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh  
         sed -i 's/local default_value=none/local default_value=thin/Ig' \
-              "$PLAT_DIR"/oplus/build/oplus_setup.sh   
+              ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh  
         sed -i 's/local default_value=enable/local default_value=disable/Ig' \
-              "$PLAT_DIR"/oplus/build/oplus_setup.sh   
-
+              ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh  
+ 
     - name: 检查内核清单同步状态 
       if: always()
       run: |
@@ -112,26 +113,26 @@ jobs:
           echo "内核清单同步失败，请检查网络连接或仓库地址。"
           exit 1 
         fi 
-
-    - name: 设置KernelSU 
+ 
+    - name: 设置 KernelSU 
       run: |
-        WORK_DIR="$env.WORK_DIR"
-        PLAT_DIR="$env.PLAT_DIR"
-        KSU_DIR="$env.KSU_DIR"
-        KERNELSU_URL="$env.KERNELSU_URL"
+        # 进入工作目录 
+        cd ${{env.WORK_DIR}}/${{env.PLAT_DIR}}/common 
         
-        cd "$WORK_DIR"/"$PLAT_DIR"/common
+        # 下载并执行KernelSU脚本 
+        curl -LSs ${{env.KERNELSU_URL}} > setup.sh  
+        bash setup.sh  next 
         
-        curl -LSs "$KERNELSU_URL" > setup.sh   
-        bash setup.sh   next 
+        # 进入KernelSU目录 
+        cd ${KSU_DIR}
         
-        cd "$KSU_DIR"
-        
+        # 获取KernelSU版本号 
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV 
         
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile 
-
+        # 更新Makefile中的版本号 
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile 
+ 
     - name: 检查KernelSU下载状态 
       if: always()
       run: |
@@ -139,47 +140,44 @@ jobs:
           echo "下载KernelSU脚本失败，请检查网络连接或脚本地址。"
           exit 1 
         fi 
-
-    - name: 添加SUSFS 
+ 
+    - name: 添加 SUSFS 
       run: |
-        WORK_DIR="$env.WORK_DIR"
-        PLAT_DIR="$env.PLAT_DIR"
-        SUSFS_REPO="$env.SUSFS_REPO"
-        PATCHES_REPO="$env.PATCHES_REPO"
-        ANDROID_VERSION="$github.event.inputs.ANDROID_VERSION" 
-        KERNEL_VERSION="$github.event.inputs.KERNEL_VERSION" 
-        KSU_DIR="$env.KSU_DIR"
+        # 进入工作目录 
+        cd ${{env.WORK_DIR}}
         
-        cd "$WORK_DIR"
+        # 克隆SUSFS和补丁仓库 
+        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}} 
+        git clone ${{env.PATCHES_REPO}}
         
-        git clone "$SUSFS_REPO" -b gki-"$ANDROID_VERSION"-"$KERNEL_VERSION"
-        git clone "$PATCHES_REPO"
+        # 进入平台目录 
+        cd ${{env.PLAT_DIR}}
         
-        cd "$PLAT_DIR"
+        # 应用补丁文件 
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch  \
+           ./common/${KSU_DIR}/ && \
+           patch -p1 --forward < ./common/${KSU_DIR}/10_enable_susfs_for_ksu.patch  || true 
         
-        cp../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch   \
-          ./common/"$KSU_DIR"/ && \
-           patch -p1 --forward <./common/"$KSU_DIR"/10_enable_susfs_for_ksu.patch   || true 
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch  \
+           ./common/ && \
+           patch -p1 < ./common/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch  || true 
         
-        cp../susfs4ksu/kernel_patches/50_add_susfs_in_gki-"$ANDROID_VERSION"-"$KERNEL_VERSION".patch  \
-          ./common/ && \
-           patch -p1 <./common/50_add_susfs_in_gki-"$ANDROID_VERSION"-"$KERNEL_VERSION".patch  || true 
+        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         
-        cp../susfs4ksu/kernel_patches/fs/*./common/fs/
-        cp../susfs4ksu/kernel_patches/include/linux/*./common/include/linux/
-        
+        # 应用其他补丁 
         cp ../../kernel_patches/69_hide_stuff.patch  ./
-        patch -p1 -F 3 < 69_hide_stuff.patch   
+        patch -p1 -F 3 < 69_hide_stuff.patch  
         
         cp ../../kernel_patches/apk_sign.c_fix.patch  ./
-        patch -p1 -F 3 < apk_sign.c_fix.patch   
+        patch -p1 -F 3 < apk_sign.c_fix.patch  
         
         cp ../../kernel_patches/core_hook.c_fix.patch  ./
-        patch -p1 --fuzz=3 < core_hook.c_fix.patch   
+        patch -p1 --fuzz=3 < core_hook.c_fix.patch  
         
         cp ../../kernel_patches/selinux.c_fix.patch  ./
-        patch -p1 -F 3 < selinux.c_fix.patch   
-
+        patch -p1 -F 3 < selinux.c_fix.patch  
+ 
     - name: 检查SUSFS应用状态 
       if: always()
       run: |
@@ -187,19 +185,17 @@ jobs:
           echo "应用SUSFS补丁失败，请检查补丁文件或代码兼容性。"
           exit 1 
         fi 
-
+ 
     - name: 编译内核 
       run: |
-        WORK_DIR="$env.WORK_DIR"
-        BUILD_KERNEL="$env.BUILD_KERNEL"
-        CPUD="$github.event.inputs.CPUD" 
+        # 进入工作目录 
+        cd ${{env.WORK_DIR}}
         
-        cd "$WORK_DIR"
-        
+        # 执行编译脚本 
         echo "开始编译内核..."
         date +"%Y-%m-%d %H:%M:%S"
         
-       ./$BUILD_KERNEL $CPUD gki 
+        ./${{env.BUILD_KERNEL}} ${{github.event.inputs.CPUD}}  gki 
         
         if [ $? -ne 0 ]; then 
           echo "编译失败，请检查编译日志。"
@@ -208,20 +204,18 @@ jobs:
         
         echo "编译完成！"
         date +"%Y-%m-%d %H:%M:%S"
-
-    - name: 制作AnyKernel3 
+ 
+    - name: 制作 AnyKernel3 
       run: |
-        WORK_DIR="$env.WORK_DIR"
-        ANYKERNEL3_REPO="$env.ANYKERNEL3_REPO"
-        UP_AK3="$env.UP_AK3"
-        UP_IMG="$env.UP_IMG"
+        # 克隆AnyKernel3仓库 
+        git clone ${{env.ANYKERNEL3_REPO}} --depth=1 
         
-        git clone "$ANYKERNEL3_REPO" --depth=1 
+        # 清理不必要的文件 
+        rm -rf ./AnyKernel3/.git ./AnyKernel3/LICENSE 
         
-        rm -rf./AnyKernel3/.git./AnyKernel3/LICENSE 
-        
-        cp./out/dist/Image./AnyKernel3/
-
+        # 复制编译好的Image文件 
+        cp ./out/dist/Image ./AnyKernel3/
+ 
     - name: 检查AnyKernel3制作状态 
       if: always()
       run: |
@@ -229,15 +223,15 @@ jobs:
           echo "制作AnyKernel3包失败，请检查编译结果或文件路径。"
           exit 1 
         fi 
-
-    - name: 上传AnyKernel3包 
+ 
+    - name: 上传 AnyKernel3 包 
       uses: actions/upload-artifact@v4 
       with:
-        name: AnyKernel3-$env.KSU_DIR_$github.event.inputs.FEIL  
-        path: $env.UP_AK3
+        name: AnyKernel3-${{env.KSU_DIR}}_${{github.event.inputs.FEIL}} 
+        path: ${{env.UP_AK3}}
 
-    - name: 上传Image文件 
+    - name: 上传 Image 文件 
       uses: actions/upload-artifact@v4 
       with:
-        name: Image-$env.KSU_DIR_$github.event.inputs.FEIL  
-        path: $env.UP_IMG
+        name: Image-${{env.KSU_DIR}}_${{github.event.inputs.FEIL}} 
+        path: ${{env.UP_IMG}}
