@@ -111,6 +111,7 @@ jobs:
     - name: 编译内核
       run: |
         cd ${{env.WORK_DIR}}
+        mkdir AnyKernel3
         ./${{env.BUILD_KERNEL}} ${{github.event.inputs.CPUD}} gki
         
     - name: 制作 AnyKernel3
