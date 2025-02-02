@@ -85,19 +85,19 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        cp kernel/out/dist/Image kernel/AnyKernel3/
-      continue-on-error: true
+        cp ./kernel/out/dist/Image ./kernel/AnyKernel3/
+      continue-on-error: true 
 
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
         name: AnyKernel3-KernelSU_Next-SUSFS
         path: kernel/AnyKernel3
-      continue-on-error: true
+      continue-on-error: true 
 
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
         name: Image-KernelSU_Next-SUSFS
         path: kernel/out/dist/Image
-      continue-on-error: true
+      continue-on-error: true 
