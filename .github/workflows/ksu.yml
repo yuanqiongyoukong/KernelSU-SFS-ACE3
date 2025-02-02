@@ -32,10 +32,10 @@ jobs:
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
 
-    - name: 拉取oneplus ace3内核清单
+    - name: 拉取内核清单
       run: |
         mkdir kernel && cd kernel
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_ace3_v.xml --depth=1
+        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
         repo sync -j$(nproc --all)
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
