@@ -69,7 +69,6 @@ jobs:
         sudo mv ~/repo /usr/local/bin/repo 
  
     - name: 拉取内核清单 
-      description: 初始化并同步内核代码仓库 
       run: |
         # 创建工作目录并进入 
         mkdir -p ${{env.WORK_DIR}} && cd ${{env.WORK_DIR}}
