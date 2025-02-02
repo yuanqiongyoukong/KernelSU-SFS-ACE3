@@ -34,7 +34,7 @@ jobs:
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
 
-    - name: 添加 KernelSU
+    - name: 设置 KernelSU
       run: |
         cd kernel/kernel_platform/common
         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
