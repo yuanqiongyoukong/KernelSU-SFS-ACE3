@@ -3,15 +3,11 @@ name: 构建ksu
 on:
   workflow_dispatch:
 
-
 jobs:
-  
   build:
-    
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
       with:
@@ -21,14 +17,11 @@ jobs:
         remove-android: 'true'
         remove-haskell: 'true'
         remove-codeql: 'true'
-
-    - name: Configure Git
+        
+    - name: 初始化编译环境
       run: |
-         git config --global user.name "yuanqiongyoukong"
-         git config --global user.email "413722718@qq.com"
-    
-    - name: 安装编译环境
-      run: |
+        git config --global user.name "yuanqiongyoukong"
+        git config --global user.email "413722718@qq.com"
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
 
@@ -37,19 +30,16 @@ jobs:
         mkdir kernel && cd kernel
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
         repo sync -j$(nproc --all)
-        rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
+        rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
         sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh
-        # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh
 
-    - name: 添加KernelSU Next
+    - name: 添加 KernelSU
       run: |
         cd kernel/kernel_platform/common
         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
         
-    - name: 添加SUSFS
+    - name: 添加 SUSFS
       run: |
            cd kernel
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
@@ -67,13 +57,10 @@ jobs:
            patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
            cp ../../kernel_patches/69_hide_stuff.patch ./
            patch -p1 -F 3 < 69_hide_stuff.patch
-           
            cp ../../kernel_patches/apk_sign.c_fix.patch ./
            patch -p1 -F 3 < apk_sign.c_fix.patch
-             
            cp ../../kernel_patches/core_hook.c_fix.patch ./
            patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-           
            cp ../../kernel_patches/selinux.c_fix.patch ./
            patch -p1 -F 3 < selinux.c_fix.patch
            
