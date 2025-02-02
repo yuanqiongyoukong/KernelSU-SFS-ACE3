@@ -117,6 +117,7 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1
+        rm -rf./AnyKernel3/.git ./AnyKernel3/LICENSE
         cp ./${{env.UP_IMG}} ./${{env.UP_AK3}}/
       continue-on-error: true 
         
