@@ -45,7 +45,6 @@ jobs:
     
     steps:
     - name: 最大化构建空间 
-      description: 清理不必要的文件以释放磁盘空间 
       uses: easimon/maximize-build-space@master 
       with:
         root-reserve-mb: 8192 
@@ -56,7 +55,6 @@ jobs:
         remove-codeql: 'true'
  
     - name: 初始化编译环境 
-      description: 安装必要的工具和依赖项 
       run: |
         # 配置Git用户信息 
         git config --global user.name  "${GIT_USER_NAME}"
@@ -118,7 +116,6 @@ jobs:
         fi 
  
     - name: 设置 KernelSU 
-      description: 下载并配置KernelSU-Next 
       run: |
         # 进入工作目录 
         cd ${{env.WORK_DIR}}/${{env.PLAT_DIR}}/common 
@@ -146,7 +143,6 @@ jobs:
         fi 
  
     - name: 添加 SUSFS 
-      description: 克隆SUSFS仓库并应用补丁 
       run: |
         # 进入工作目录 
         cd ${{env.WORK_DIR}}
@@ -192,7 +188,6 @@ jobs:
         fi 
  
     - name: 编译内核 
-      description: 执行内核编译任务 
       run: |
         # 进入工作目录 
         cd ${{env.WORK_DIR}}
@@ -212,7 +207,6 @@ jobs:
         date +"%Y-%m-%d %H:%M:%S"
  
     - name: 制作 AnyKernel3 
-      description: 生成AnyKernel3包 
       run: |
         # 克隆AnyKernel3仓库 
         git clone ${{env.ANYKERNEL3_REPO}} --depth=1 
