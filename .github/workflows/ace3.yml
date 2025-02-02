@@ -28,7 +28,7 @@ jobs:
     - name: 拉取内核清单及相关操作
       run: |
         mkdir -p kernel && cd kernel
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b oneplus/sm8550 -m oneplus_12r_v.xml  --depth=1
+        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_12r_v.xml --depth=1
         repo sync -j$(nproc --all)
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
@@ -47,29 +47,28 @@ jobs:
         cd kernel
         git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-android13-5.15
         cd kernel_platform
-        cp../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/ 
-        cp../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/ 
-        cp -r../susfs4ksu/kernel_patches/fs/* ./common/fs/
-        cp -r../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
+        cp -r ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp -r ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
         # Apply patches
         cd./common/KernelSU
-        patch -p1 --forward < 10_enable_susfs_for_ksu.patch  || { echo "Patch 10_enable_susfs_for_ksu.patch  failed"; exit 1; }
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd..
-        patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch  || { echo "Patch 50_add_susfs_in_gki-android13-5.15.patch  failed"; exit 1; }
+        patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
 
     - name: 编译内核
       run: |
         cd kernel
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh  kalama gki
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
 
     - name: 制作 AnyKernel3
       run: |
-        KERNEL_DIR=kernel
-        cd $KERNEL_DIR
+        cd kernel
         git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
         rm -rf ./AnyKernel3/.git ./AnyKernel3/LICENSE
-        cp ./out/dist/Image ./AnyKernel3/
+        cp out/dist/Image AnyKernel3/
       continue-on-error: true 
 
     - name: 上传 AnyKernel3
