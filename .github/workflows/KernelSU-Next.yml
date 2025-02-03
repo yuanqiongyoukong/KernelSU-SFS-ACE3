@@ -62,37 +62,37 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir ${WORK_DIR} && cd ${WORK_DIR}
-        repo init -u ${KERNEL_MANIFEST_URL} -b refs/heads/oneplus/${github.event.inputs.CPU} -m ${github.event.inputs.FEIL}.xml --depth=1
+        mkdir ${{env.WORK_DIR}} && cd ${{env.WORK_DIR}}
+        repo init -u ${{env.KERNEL_MANIFEST_URL}} -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
         repo --trace sync -c -j$(nproc --all) --no-tags
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
-        sed -i 's/ -dirty//g' ${PLAT_DIR}/common/scripts/setlocalversion ${PLAT_DIR}/msm-kernel/scripts/setlocalversion
-        # sed -i '203a\export LTO=thin' ${PLAT_DIR}/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
-        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' ${PLAT_DIR}/oplus/build/oplus_setup.sh                 # 禁用图像打包
-        # sed -i 's/local default_value=none/local default_value=thin/Ig' ${PLAT_DIR}/oplus/build/oplus_setup.sh              # 设置默认值为thin
-        # sed -i 's/local default_value=enable/local default_value=disable/Ig' ${PLAT_DIR}/oplus/build/oplus_setup.sh         # 设置默认值为禁用
+        sed -i 's/ -dirty//g' ${{env.PLAT_DIR}}/common/scripts/setlocalversion ${{env.PLAT_DIR}}/msm-kernel/scripts/setlocalversion
+        # sed -i '203a\export LTO=thin' ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
+        # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh                 # 禁用图像打包
+        # sed -i 's/local default_value=none/local default_value=thin/Ig' ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh              # 设置默认值为thin
+        # sed -i 's/local default_value=enable/local default_value=disable/Ig' ${{env.PLAT_DIR}}/oplus/build/oplus_setup.sh         # 设置默认值为禁用
         
     - name: 设置 KernelSU
       run: |
-        cd ${WORK_DIR}/${PLAT_DIR}
-        curl -LSs ${KERNELSU_URL} | bash -s next
-        cd ${KSU_DIR}
+        cd ${{env.WORK_DIR}}/${{env.PLAT_DIR}}
+        curl -LSs ${{env.KERNELSU_URL}} | bash -s next
+        cd ${{env.KSU_DIR}}
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${{env.KSU_VERSION}/" kernel/Makefile
         
     - name: 添加 SUSFS
       run: |
-        cd ${WORK_DIR}
-        git clone ${SUSFS_REPO} -b gki-${github.event.inputs.ANDROID_VERSION}-${github.event.inputs.KERNEL_VERSION}
-        git clone ${PATCHES_REPO}
-        cd ${PLAT_DIR}
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${KSU_DIR}/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${github.event.inputs.ANDROID_VERSION}-${github.event.inputs.KERNEL_VERSION}.patch ./common/
+        cd ${{env.WORK_DIR}}
+        git clone ${{env.SUSFS_REPO}} -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
+        git clone ${{env.PATCHES_REPO}}
+        cd ${{env.PLAT_DIR}}
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./${{env.KSU_DIR}}/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         # 应用补丁
-        cd ./${KSU_DIR}
+        cd ./${{env.KSU_DIR}}
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
@@ -107,26 +107,26 @@ jobs:
         
     - name: 编译内核
       run: |
-        cd ${WORK_DIR}
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${github.event.inputs.CPUD} gki
+        cd ${{env.WORK_DIR}}
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
         
     - name: 制作 AnyKernel3
       run: |
-        git clone ${ANYKERNEL3_REPO} --depth=1
+        git clone ${{env.ANYKERNEL3_REPO}} --depth=1
         rm -rf ./AnyKernel3/.git ./AnyKernel3/LICENSE
-        cp kernel_workspace/kernel_platform/out/msm-kernel-${github.event.inputs.CPUD}-gki/dist/Image ./AnyKernel3/
+        cp kernel_workspace/kernel_platform/out/msm-kernel-${{github.event.inputs.CPUD}}-gki/dist/Image ./AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${KSU_DIR}_${env.KSUVER}_${github.event.inputs.FEIL}
+        name: AnyKernel3_${{env.KSU_DIR}}}_${{env.KSUVER}}_${{github.event.inputs.FEIL}}
         path: ./AnyKernel3/*
       continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image_${KSU_DIR}_${env.KSUVER}_${github.event.inputs.FEIL}
-        path: kernel_workspace/kernel_platform/out/msm-kernel-${github.event.inputs.CPUD}-gki/dist/Image
+        name: Image_${{env.KSU_DIR}}}_${{env.KSUVER}}_${{github.event.inputs.FEIL}}
+        path: kernel_workspace/kernel_platform/out/msm-kernel-${{github.event.inputs.CPUD}}-gki/dist/Image
       continue-on-error: true 
