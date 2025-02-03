@@ -70,7 +70,10 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
-        cd kernel_platform
+        git clone https://github.com/TheWildJames/kernel_patches.git
+        cd kernel_patches
+        sed -i -e 's/KernelSU-Next/KernelSU/g' apk_sign.c_fix.patch  core_hook.c_fix.patch  selinux.c_fix.patch
+        cd ../kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
@@ -80,6 +83,15 @@ jobs:
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
+        cp ../../kernel_patches/69_hide_stuff.patch ./
+        patch -p1 -F 3 < 69_hide_stuff.patch
+        cd ..
+        cp ../kernel_patches/apk_sign.c_fix.patch ./
+        patch -p1 -F 3 < apk_sign.c_fix.patch
+        cp ../kernel_patches/core_hook.c_fix.patch ./
+        patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
+        cp ../kernel_patches/selinux.c_fix.patch ./
+        patch -p1 -F 3 < selinux.c_fix.patch
 
     - name: 编译内核
       run: |
