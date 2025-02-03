@@ -51,7 +51,7 @@ jobs:
     - name: 拉取内核清单
       run: |
         mkdir kernel_workspace && cd kernel_workspace
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{github.event.inputs.CPU}} -m ${{github.event.inputs.FEIL}}.xml --depth=1
+        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo --trace sync -c -j$(nproc --all) --no-tags
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
@@ -67,16 +67,16 @@ jobs:
         cd KernelSU-Next
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${env.KSU_VERSION}/" kernel/Makefile
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 添加 SUSFS
       run: |
         cd kernel_workspace
-        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}
+        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
         git clone https://github.com/TheWildJames/kernel_patches.git
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{github.event.inputs.ANDROID_VERSION}}-${{github.event.inputs.KERNEL_VERSION}}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         # 应用补丁
@@ -96,25 +96,25 @@ jobs:
     - name: 编译内核
       run: |
         cd kernel_workspace
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{github.event.inputs.CPUD}} gki
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
         
     - name: 制作 AnyKernel3
       run: |
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git ./AnyKernel3/LICENSE
-        cp kernel_workspace/kernel_platform/out/msm-kernel-${{github.event.inputs.CPUD}}-gki/dist/Image ./AnyKernel3/
+        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_KernelSU-Next_${{env.KSUVER}}_${{github.event.inputs.FEIL}}
+        name: AnyKernel3_KernelSU-Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
         path: ./AnyKernel3/*
       continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image_KernelSU-Next_${{env.KSUVER}}_${{github.event.inputs.FEIL}}
-        path: kernel_workspace/kernel_platform/out/msm-kernel-${{github.event.inputs.CPUD}}-gki/dist/Image
+        name: Image_KernelSU-Next_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+        path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image
       continue-on-error: true 
