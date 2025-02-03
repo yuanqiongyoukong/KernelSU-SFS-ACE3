@@ -1,5 +1,4 @@
 name: 构建KernelSU-Next
-
 on:
   workflow_dispatch:
     inputs:
@@ -27,7 +26,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
