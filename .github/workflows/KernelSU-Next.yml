@@ -86,6 +86,10 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
         cp ../../kernel_patches/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
+        git add -A && git commit -a -m "BUILD Kernel"
+        cd ..
+        cd ./msm-kernel && git add -A && git commit -a -m "BUILD Kernel"
+        cd ..
         cp ../../kernel_patches/apk_sign.c_fix.patch ./
         patch -p1 -F 3 < apk_sign.c_fix.patch
         cp ../../kernel_patches/core_hook.c_fix.patch ./
