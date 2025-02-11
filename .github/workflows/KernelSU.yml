@@ -22,6 +22,20 @@ on:
         description: "内核版本"
         required: true 
         default: '5.15'
+      KSUNEXT_ENABLED:
+        description: "添加 KernelSU"
+        required: true 
+        type: boolean
+        default: true 
+      SUSFS_ENABLED:
+        description: "添加 SUSFS"
+        required: true 
+        type: boolean
+        default: true 
+      SUSFS_VERSION:
+        description: "SUSFS 版本"
+        required: true 
+        default: 'v1.5.5'
         
 jobs:
   build:
@@ -57,7 +71,8 @@ jobs:
         rm -f common/android/abi_gki_protected_exports_* msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' kernel_platform/common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
         
-    - name: 设置 KernelSU
+    - name: 添加 KernelSU
+      if: github.event.inputs.KSUNEXT_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
@@ -67,6 +82,7 @@ jobs:
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 添加 SUSFS
+      if: github.event.inputs.SUSFS_ENABLED == 'true'
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
@@ -80,12 +96,12 @@ jobs:
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < mksu_susfs.patch || true
-        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
+        # patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         cp ../../kernel_patches/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
-        # cd ..
+        cd ..
         # cp ../kernel_patches/apk_sign.c_fix.patch ./
         # patch -p1 -F 3 < apk_sign.c_fix.patch
         # cp ../kernel_patches/core_hook.c_fix.patch ./
