@@ -2,16 +2,15 @@ name: 构建SM8550内核-KernelSU-Next-SUS
 
 on:
   workflow_dispatch:
-
-
-jobs:
   
+jobs:
+
   build:
-    
+  
     runs-on: ubuntu-latest
-
+    
     steps:
-
+    
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
       with:
@@ -21,17 +20,17 @@ jobs:
         remove-android: 'true'
         remove-haskell: 'true'
         remove-codeql: 'true'
-
+        
     - name: Configure Git
       run: |
          git config --global user.name "yuanqiongyoukong"
          git config --global user.email "413722718@qq.com"
-    
+         
     - name: 安装编译环境
       run: |
         sudo apt update && sudo apt upgrade -y
         sudo apt install ccache curl git repo python3 python-is-python3 -y
-
+        
     - name: 拉取oneplus 12r内核清单
       run: |
         mkdir kernel && cd kernel
@@ -41,7 +40,7 @@ jobs:
         # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh                 # 禁用图像打包
         # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh              # 设置默认值为thin
         # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh         # 设置默认值为禁用
-
+        
     - name: 添加KernelSU Next
       run: |
         cd kernel/kernel_platform/common
@@ -57,7 +56,7 @@ jobs:
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-
+           
            # Apply patches
            cd ./common/KernelSU-Next
            patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
@@ -68,7 +67,7 @@ jobs:
            
            cp ../../kernel_patches/apk_sign.c_fix.patch ./
            patch -p1 -F 3 < apk_sign.c_fix.patch
-             
+           
            cp ../../kernel_patches/core_hook.c_fix.patch ./
            patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
            
@@ -79,7 +78,7 @@ jobs:
       run: |
         cd kernel
         ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
-
+        
     - name: Upload Image
       uses: actions/upload-artifact@v4
       with:
