@@ -1,16 +1,11 @@
 name: 构建SM8550内核-KernelSU-Next-SUS
-
 on:
   workflow_dispatch:
   
 jobs:
-
   build:
-  
     runs-on: ubuntu-latest
-    
     steps:
-    
     - name: Maximize build space
       uses: easimon/maximize-build-space@master
       with:
