@@ -32,10 +32,6 @@ on:
         required: true 
         type: boolean
         default: true 
-      SUSFS_VERSION:
-        description: "SUSFS 版本"
-        required: true 
-        default: 'v1.5.5'
         
 jobs:
   build:
