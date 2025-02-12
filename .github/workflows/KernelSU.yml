@@ -68,7 +68,7 @@ jobs:
     - name: 添加 KernelSU
       if: github.event.inputs.KSUNEXT_ENABLED == 'true'
       run: |
-        cd kernel_platform
+        cd kernel_workspace/kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion kernel_platform/msm-kernel/scripts/setlocalversion
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
