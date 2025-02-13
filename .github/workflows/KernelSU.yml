@@ -63,7 +63,7 @@ jobs:
       run: |
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
-        repo --trace sync -c -j$(nproc --all) --no-tags
+        repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
         
     - name: 添加 KernelSU
       if: github.event.inputs.KSUNEXT_ENABLED == 'true'
@@ -73,6 +73,7 @@ jobs:
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
         cd KernelSU
+        git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
