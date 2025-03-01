@@ -109,12 +109,13 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
+        cd kernel_workspace
         sudo apt clean
-        rm -rf kernel_workspace/kernel_platform/.tmp_*
-        rm -rf kernel_workspace/kernel_platform/out/.tmp_*
+        rm -rf ./kernel_platform/.tmp_*
+        rm -rf ./kernel_platform/out/.tmp_*
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
+        cp ./kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
