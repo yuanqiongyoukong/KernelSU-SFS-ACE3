@@ -117,6 +117,18 @@ jobs:
         cd kernel
         ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
         
+    - name: 清理不必要的文件以释放空间
+      run: |
+        # 清理 apt 缓存
+        sudo apt clean
+        # 清理内核构建过程中的临时文件
+        rm -rf kernel_workspace/kernel_platform/.tmp_*
+        rm -rf kernel_workspace/kernel_platform/out/.tmp_*
+        # 清理克隆仓库的 .git 目录（如果不需要版本控制信息）
+        rm -rf kernel_workspace/susfs4ksu/.git
+        rm -rf kernel_workspace/kernel_patches4mksu/.git
+        rm -rf kernel_workspace/Action-KernelSU-Next/.git
+        
     - name: Upload Image
       uses: actions/upload-artifact@v4
       with:
