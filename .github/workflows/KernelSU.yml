@@ -61,13 +61,13 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
+        rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
+        sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
         
     - name: 添加 KernelSU
       if: github.event.inputs.KSU_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform
-        rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
-        sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
         cd KernelSU
         git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
