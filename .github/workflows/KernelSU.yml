@@ -40,8 +40,8 @@ jobs:
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
-        root-reserve-mb: 16384
-        temp-reserve-mb: 4096
+        root-reserve-mb: 8192
+        temp-reserve-mb: 2048
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -106,6 +106,18 @@ jobs:
       run: |
         cd kernel_workspace
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
+
+    - name: 清理不必要的文件以释放空间
+      run: |
+        # 清理 apt 缓存
+        sudo apt clean
+        # 清理内核构建过程中的临时文件
+        rm -rf kernel_workspace/kernel_platform/.tmp_*
+        rm -rf kernel_workspace/kernel_platform/out/.tmp_*
+        # 清理克隆仓库的 .git 目录（如果不需要版本控制信息）
+        rm -rf kernel_workspace/susfs4ksu/.git
+        rm -rf kernel_workspace/kernel_patches4mksu/.git
+        rm -rf kernel_workspace/Action-KernelSU-Next/.git
         
     - name: 制作 AnyKernel3
       run: |
