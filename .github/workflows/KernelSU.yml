@@ -40,9 +40,9 @@ jobs:
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
-        root-reserve-mb: 8192
-        temp-reserve-mb: 2048
-        swap-size-mb: 8192
+        root-reserve-mb: 16384
+        temp-reserve-mb: 4096
+        swap-size-mb: 16384
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -81,8 +81,8 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
-        git clone https://github.com/TanakaLun/kernel_patches4mksu.git
-        git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev
+        git clone https://github.com/TanakaLun/kernel_patches4mksu.git --depth 1
+        git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../kernel_patches4mksu/mksu_susfs.patch ./KernelSU/
