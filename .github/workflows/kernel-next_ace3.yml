@@ -1,6 +1,44 @@
 name: 构建SM8550内核-KernelSU-Next-SUS
 on:
   workflow_dispatch:
+    inputs:
+      CPU:
+        description: "分支"
+        required: true 
+        default: 'sm7675'
+      FEIL:
+        description: "配置文件"
+        required: true 
+        default: 'oneplus_ace_3v_v'
+      CPUD:
+        description: "处理器代号"
+        required: true 
+        default: 'pineapple'
+      ANDROID_VERSION:
+        description: "内核安卓版本"
+        required: true 
+        default: 'android14'
+      KERNEL_VERSION:
+        description: "内核版本"
+        required: true 
+        default: '6.1'
+      IF_KSU_OR_NEXT_OR_NONE:
+        description: "是否启用ksu或ksu next"
+        required: true 
+        type: choice
+        options:
+          - ksu
+          - ksu-next
+          - none
+      SUSFS_ENABLED:
+        description: "添加 SUSFS(如果不选择ksu next将不会生效)"
+        required: true 
+        type: boolean
+        default: false 
+      KERNEL_NAME:
+        description: "自定义内核后版本名"
+        required: false 
+        default: ''
   
 jobs:
   build:
