@@ -81,6 +81,7 @@ jobs:
         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
         
     - name: 添加SUSFS
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.IF_KSU_OR_NEXT_OR_NONE == 'ksu-next'
       run: |
            cd kernel
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
