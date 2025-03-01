@@ -106,21 +106,12 @@ jobs:
       run: |
         cd kernel_workspace
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
-
-    - name: 清理不必要的文件以释放空间
-      run: |
-        # 清理 apt 缓存
-        sudo apt clean
-        # 清理内核构建过程中的临时文件
-        rm -rf kernel_workspace/kernel_platform/.tmp_*
-        rm -rf kernel_workspace/kernel_platform/out/.tmp_*
-        # 清理克隆仓库的 .git 目录（如果不需要版本控制信息）
-        rm -rf kernel_workspace/susfs4ksu/.git
-        rm -rf kernel_workspace/kernel_patches4mksu/.git
-        rm -rf kernel_workspace/Action-KernelSU-Next/.git
         
     - name: 制作 AnyKernel3
       run: |
+        sudo apt clean
+        rm -rf kernel_workspace/kernel_platform/.tmp_*
+        rm -rf kernel_workspace/kernel_platform/out/.tmp_*
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
         cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
