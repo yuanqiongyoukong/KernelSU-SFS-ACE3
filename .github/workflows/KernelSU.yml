@@ -111,7 +111,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        rm -rf ./AnyKernel3/.git
+        rm -rf kernel_workspace/AnyKernel3/.git
         cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
