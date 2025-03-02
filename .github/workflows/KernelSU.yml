@@ -61,7 +61,6 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo sync -c -j$(nproc --all) --no-tags
-        sed -i '207a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
         
@@ -83,7 +82,6 @@ jobs:
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
         git clone https://github.com/TanakaLun/kernel_patches4mksu.git --depth 1
         git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../kernel_patches4mksu/mksu_susfs.patch ./KernelSU/
@@ -111,6 +109,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf kernel_workspace/AnyKernel3/.git
         mv kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
