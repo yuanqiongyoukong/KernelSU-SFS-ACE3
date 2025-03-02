@@ -40,9 +40,9 @@ jobs:
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
-        root-reserve-mb: 16384
-        temp-reserve-mb: 4096
-        swap-size-mb: 8192
+        root-reserve-mb: 32768
+        temp-reserve-mb: 8192
+        swap-size-mb: 16384
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -111,7 +111,10 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         cd kernel_workspace
-        sudo apt clean
+        rm -rf ./susfs4ksu/*
+        rm -rf ./kernel_patches4mksu/*
+        rm -rf ./Action-KernelSU-Next/*
+        rm -rf ./kernel_platform/KernelSU/*
         rm -rf ./kernel_platform/.tmp_*
         rm -rf ./kernel_platform/out/.tmp_*
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
