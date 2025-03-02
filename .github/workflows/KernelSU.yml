@@ -43,12 +43,10 @@ jobs:
         root-reserve-mb: 8192
         temp-reserve-mb: 2048
         swap-size-mb: 4096
-        overprovision-lvm: 'false'
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
         remove-codeql: 'true'
-        remove-docker-images: 'false'
         
     - name: 初始化编译环境
       run: |
