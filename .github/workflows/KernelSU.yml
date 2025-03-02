@@ -60,7 +60,7 @@ jobs:
       run: |
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
-        repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
+        repo sync -c -j$(nproc --all) --no-tags
         sed -i '207a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
@@ -83,6 +83,7 @@ jobs:
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
         git clone https://github.com/TanakaLun/kernel_patches4mksu.git --depth 1
         git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../kernel_patches4mksu/mksu_susfs.patch ./KernelSU/
@@ -110,16 +111,8 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        cd kernel_workspace
-        rm -rf ./susfs4ksu/*
-        rm -rf ./kernel_patches4mksu/*
-        rm -rf ./Action-KernelSU-Next/*
-        rm -rf ./kernel_platform/KernelSU/*
-        rm -rf ./kernel_platform/.tmp_*
-        rm -rf ./kernel_platform/out/.tmp_*
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        cp ./kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
+        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image ./AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
