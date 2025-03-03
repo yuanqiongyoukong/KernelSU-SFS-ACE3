@@ -64,6 +64,7 @@ jobs:
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf kernel_workspace/AnyKernel3/.git
         
     - name: 添加 KernelSU
       if: github.event.inputs.KSU_ENABLED == 'true'
@@ -90,6 +91,7 @@ jobs:
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
@@ -110,7 +112,6 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        rm -rf kernel_workspace/AnyKernel3/.git
         mv kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
