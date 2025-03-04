@@ -90,7 +90,7 @@ jobs:
         fi
         
     - name: 添加 KernelSU
-      if: github.event.inputs.KSU_ENABLED == 'true'
+      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
@@ -101,7 +101,7 @@ jobs:
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 添加 SUSFS
-      if: github.event.inputs.SUSFS_ENABLED == 'true'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_VERSION == 'mksu'
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
