@@ -27,11 +27,31 @@ on:
         required: true 
         type: boolean
         default: true 
+      KSU_VERSION:
+        description: "ksu版本"
+        required: true 
+        type: choice
+        options:
+          - ksu
+          - mksu
+          - rksu
       SUSFS_ENABLED:
         description: "添加 SUSFS"
         required: true 
         type: boolean
         default: true 
+      PATCH_VERSION:
+        description: "补丁版本"
+        required: true 
+        type: choice
+        options:
+          - ksu
+          - mksu
+          - rksu
+      KERNEL_NAME:
+        description: "自定义内核后版本名"
+        required: false 
+        default: ''
         
 jobs:
   build:
@@ -65,6 +85,9 @@ jobs:
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf kernel_workspace/AnyKernel3/.git
+        if [ -n "${{ github.event.inputs.KERNEL_NAME }}" ]; then
+          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' kernel_workspace/kernel_platform/common/scripts/setlocalversion
+        fi
         
     - name: 添加 KernelSU
       if: github.event.inputs.KSU_ENABLED == 'true'
