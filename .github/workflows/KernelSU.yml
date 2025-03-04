@@ -32,9 +32,9 @@ on:
         required: true 
         type: choice
         options:
-          - ksu
           - mksu
           - rksu
+          - ksu
       SUSFS_ENABLED:
         description: "添加 SUSFS"
         required: true 
@@ -45,9 +45,9 @@ on:
         required: true 
         type: choice
         options:
-          - ksu
           - mksu
           - rksu
+          - ksu
       KERNEL_NAME:
         description: "自定义内核后版本名"
         required: false 
