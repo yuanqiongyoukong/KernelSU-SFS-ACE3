@@ -1,37 +1,37 @@
-name: 构建SM8550内核-KernelSU-Next-SUS
+name: 构建SM8550内核-KernelSU-SUS
 on:
   workflow_dispatch:
     inputs:
       CPU:
         description: "分支"
         required: true 
-        default: 'sm7675'
+        default: 'sm8550'
       FEIL:
         description: "配置文件"
         required: true 
-        default: 'oneplus_ace_3v_v'
+        default: 'oneplus_ace3_v'
       CPUD:
         description: "处理器代号"
         required: true 
-        default: 'pineapple'
+        default: 'kamala'
       ANDROID_VERSION:
         description: "内核安卓版本"
         required: true 
-        default: 'android14'
+        default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
         required: true 
-        default: '6.1'
+        default: '5.15'
       IF_KSU_OR_NEXT_OR_NONE:
-        description: "是否启用ksu或ksu next"
+        description: "是否启用ksu或mksu"
         required: true 
         type: choice
         options:
           - ksu
-          - ksu-next
+          - mksu
           - none
       SUSFS_ENABLED:
-        description: "添加 SUSFS(如果不选择ksu next将不会生效)"
+        description: "添加 SUSFS(如果不选择mksu将不会生效)"
         required: true 
         type: boolean
         default: false 
@@ -78,13 +78,13 @@ jobs:
         fi
         
     - name: 添加KernelSU Next
-      if: github.event.inputs.IF_KSU_OR_NEXT_OR_NONE == 'ksu-next'
+      if: github.event.inputs.IF_KSU_OR_NEXT_OR_NONE == 'mksu'
       run: |
         cd kernel/kernel_platform/common
         curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
         
     - name: 添加SUSFS
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.IF_KSU_OR_NEXT_OR_NONE == 'ksu-next'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.IF_KSU_OR_NEXT_OR_NONE == 'mksu'
       run: |
            cd kernel
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
@@ -119,15 +119,12 @@ jobs:
         
     - name: 清理不必要的文件以释放空间
       run: |
-        # 清理 apt 缓存
-        sudo apt clean
         # 清理内核构建过程中的临时文件
         rm -rf kernel_workspace/kernel_platform/.tmp_*
         rm -rf kernel_workspace/kernel_platform/out/.tmp_*
         # 清理克隆仓库的 .git 目录（如果不需要版本控制信息）
         rm -rf kernel_workspace/susfs4ksu/.git
-        rm -rf kernel_workspace/kernel_patches4mksu/.git
-        rm -rf kernel_workspace/Action-KernelSU-Next/.git
+        rm -rf kernel_workspace/kernel_patches/.git
         
     - name: Upload Image
       uses: actions/upload-artifact@v4
