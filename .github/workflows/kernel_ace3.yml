@@ -1,11 +1,12 @@
-name: 构建SM8550内核-KernelSU-SUS
+name: 构建ACE3内核-KernelSU-SUS
 on:
   workflow_dispatch:
+  
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Maximize build space
+    - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
         root-reserve-mb: 8192
@@ -15,7 +16,7 @@ jobs:
         remove-haskell: 'true'
         remove-codeql: 'true'
         
-    - name: Configure Git
+    - name: 配置 Git
       run: |
          git config --global user.name "yuanqiongyoukong"
          git config --global user.email "413722718@qq.com"
@@ -27,42 +28,42 @@ jobs:
         
     - name: 拉取内核清单
       run: |
-        mkdir kernel && cd kernel
+        mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_ace3_v.xml --depth=1
-        repo sync -j$(nproc --all)
-        # sed -i '203a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
+        repo sync -c -j$(nproc --all) --no-tags
+        # sed -i '207a\export LTO=thin' kernel_platform/oplus/build/oplus_setup.sh                                                # 启用ThinLTO优化
         # sed -i 's/export REPACK_IMG=true/export REPACK_IMG=false/Ig' kernel_platform/oplus/build/oplus_setup.sh                 # 禁用图像打包
         # sed -i 's/local default_value=none/local default_value=thin/Ig' kernel_platform/oplus/build/oplus_setup.sh              # 设置默认值为thin
         # sed -i 's/local default_value=enable/local default_value=disable/Ig' kernel_platform/oplus/build/oplus_setup.sh         # 设置默认值为禁用
         
     - name: 添加KernelSU
       run: |
-        cd kernel/kernel_platform/common
+        cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
         
     - name: 添加SUSFS
       run: |
-           cd kernel
+           cd kernel_workspace
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android13-5.15
            cd kernel_platform
-           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/KernelSU/
+           cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
            
            # 应用补丁
-           cd ./common/KernelSU
+           cd ./KernelSU
            patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-           cd ..
+           cd ../common
            patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
            
     - name: 编译内核
       run: |
-        cd kernel
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
+        cd kernel_workspace
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
         name: Image-KernelSU-SUSFS
-        path: kernel/out/dist/Image
+        path: kernel_workspace/out/dist/Image
