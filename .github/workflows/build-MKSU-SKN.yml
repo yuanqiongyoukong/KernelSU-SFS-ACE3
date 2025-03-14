@@ -4,31 +4,31 @@ on:
     inputs:
       CPU:
         description: "分支"
-        required: true
-        default: 'sm8650'
+        required: true 
+        default: 'sm8550'
       FEIL:
         description: "配置文件"
-        required: true
-        default: 'oneplus_ace3_pro_v'
+        required: true 
+        default: 'oneplus_ace3_v'
       CPUD:
         description: "处理器代号"
-        required: true
-        default: 'pineapple'
+        required: true 
+        default: 'kalama'
       ANDROID_VERSION:
         description: "内核安卓版本"
-        required: true
-        default: 'android14'
+        required: true 
+        default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
-        required: true
-        default: '6.1'
+        required: true 
+        default: '5.15'
       KERNEL_NAME:
         description: "修改内核名称"
-        required: true
-        default: '-android14-11-o-g1132d864665d'
+        required: true 
+        default: '-android13-o-g1132d864665d'
       kernelsu_variant:
         description: "选择 KSU"
-        required: true
+        required: true 
         type: choice
         options:
           - Kernel
@@ -36,7 +36,7 @@ on:
         default: MKSU-SKN
       kernelsu_version:
         description: "选择 KSU 版本"
-        required: true
+        required: true 
         type: choice
         options:
           - without ksu
@@ -45,12 +45,12 @@ on:
         default: main
       SUSFS_ENABLED:
         description: "添加 SUSFS"
-        required: true
+        required: true 
         type: boolean
-        default: true
+        default: true 
       VFS_patch_ENABLED:
         description: "添加vfs补丁（新钩子）？"
-        required: true
+        required: true 
         type: choice
         options:
           - enable
