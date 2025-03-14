@@ -25,7 +25,7 @@ on:
       KERNEL_NAME:
         description: "修改内核名称"
         required: true 
-        default: '-android13-o-g1132d864665d'
+        default: '-android13-8-o-01126-ge3f5c81edd77'
       kernelsu_variant:
         description: "选择 KSU"
         required: true 
