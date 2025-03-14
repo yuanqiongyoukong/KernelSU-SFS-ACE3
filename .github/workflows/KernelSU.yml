@@ -32,8 +32,9 @@ on:
         required: true 
         type: choice
         options:
-          - mksu
           - ksu
+          - ksuci
+          - mksu
       SUSFS_ENABLED:
         description: "添加 SUSFS"
         required: true 
@@ -44,8 +45,8 @@ on:
         required: true 
         type: choice
         options:
-          - mksu
           - ksu
+          - mksu
       KERNEL_NAME:
         description: "自定义内核后版本名"
         required: false 
@@ -82,16 +83,26 @@ jobs:
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
         if [ -n "${{ github.event.inputs.KERNEL_NAME }}" ]; then
-          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' kernel_workspace/kernel_platform/common/scripts/setlocalversion
+          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' ./kernel_platform/common/scripts/setlocalversion
         fi
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf kernel_workspace/AnyKernel3/.git
+        rm -rf ./AnyKernel3/.git
 
     - name: 添加 KernelSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+
+    - name: 添加 KernelSU CI
+      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksuci'
+      run: |
+        cd kernel_workspace/kernel_platform
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
