@@ -107,24 +107,7 @@ jobs:
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
-        
-    - name: 添加 SUSFS
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_VERSION == 'ksu'
-      run: |
-        cd kernel_workspace
-        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
-        cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
-        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-        
-        # 应用补丁
-        cd ./KernelSU
-        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-        cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
-        
+
     - name: 添加 MKernelSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
@@ -136,20 +119,32 @@ jobs:
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-    - name: 添加 MSUSFS
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_VERSION == 'mksu'
+    - name: 添加 SUSFS
+      if: github.event.inputs.SUSFS_ENABLED == 'true'
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
-        git clone https://github.com/WildPlusKernel/kernel_patches.git --depth 1
-        git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../kernel_patches/mksu/mksu_susfs.patch ./KernelSU/
-        cp ../Action-KernelSU-Next/mksu_patch/kernel/* ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+        
+        # 应用补丁
+        cd ./KernelSU
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
+        cd ../common
+        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        
+    - name: Mksu 补丁
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_VERSION == 'mksu'
+      run: |
+        cd kernel_workspace
+        git clone https://github.com/WildPlusKernel/kernel_patches.git --depth 1
+        git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
+        cd kernel_platform
+        cp ../kernel_patches/mksu/mksu_susfs.patch ./KernelSU/
+        cp ../Action-KernelSU-Next/mksu_patch/kernel/* ./KernelSU/
         
         # 应用补丁
         cd ./KernelSU
@@ -158,9 +153,7 @@ jobs:
         cd kernel
         patch < ../core_hook.c.patch || true
         patch < ../sucompat.c.patch || true
-        cd ..
-        cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        cd ../../common
         cp ../../kernel_patches/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
         
