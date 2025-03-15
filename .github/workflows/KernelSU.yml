@@ -33,7 +33,6 @@ on:
         type: choice
         options:
           - ksu
-          - ksuci
           - mksu
       SUSFS_ENABLED:
         description: "添加 SUSFS"
@@ -97,17 +96,7 @@ jobs:
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
-
-    - name: 添加 KernelSU CI
-      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksuci'
-      run: |
-        cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-        cd KernelSU
-        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
-        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
-
+        
     - name: 添加 MKernelSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
