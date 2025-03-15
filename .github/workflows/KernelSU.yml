@@ -23,7 +23,7 @@ on:
         required: true 
         default: '5.15'
       KSU_ENABLED:
-        description: "添加 KernelSU"
+        description: "设置 KernelSU"
         required: true 
         type: boolean
         default: true 
@@ -35,7 +35,7 @@ on:
           - ksu
           - mksu
       SUSFS_ENABLED:
-        description: "添加 SUSFS"
+        description: "设置 SUSFS"
         required: true 
         type: boolean
         default: true 
@@ -58,8 +58,8 @@ jobs:
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
-        root-reserve-mb: 8192
-        temp-reserve-mb: 2048
+        root-reserve-mb: 16384
+        temp-reserve-mb: 4096
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
@@ -84,10 +84,8 @@ jobs:
         if [ -n "${{ github.event.inputs.KERNEL_NAME }}" ]; then
           sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' ./kernel_platform/common/scripts/setlocalversion
         fi
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
 
-    - name: 添加 KernelSU
+    - name: 设置 KernelSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
@@ -97,7 +95,7 @@ jobs:
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-    - name: 添加 MKernelSU
+    - name: 设置 MKernelSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
@@ -108,7 +106,7 @@ jobs:
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-    - name: 添加 SUSFS
+    - name: 设置 SUSFS
       if: github.event.inputs.SUSFS_ENABLED == 'true'
       run: |
         cd kernel_workspace
@@ -118,7 +116,6 @@ jobs:
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-        
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
@@ -134,7 +131,6 @@ jobs:
         cd kernel_platform
         cp ../kernel_patches/mksu/mksu_susfs.patch ./KernelSU/
         cp ../Action-KernelSU-Next/mksu_patch/kernel/* ./KernelSU/
-        
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
@@ -153,19 +149,20 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        mv kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
+        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
         path: kernel_workspace/AnyKernel3/*
       continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
-        path: kernel_workspace/AnyKernel3/Image
-      continue-on-error: true 
+        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+        path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image
