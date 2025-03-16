@@ -145,12 +145,12 @@ jobs:
     - name: 编译内核
       run: |
         cd kernel_workspace
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
         
     - name: 制作 AnyKernel3
       run: |
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
         cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
