@@ -151,7 +151,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        mv kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
@@ -165,4 +165,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
-        path: kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image
+        path: kernel_workspace/AnyKernel3/Image
