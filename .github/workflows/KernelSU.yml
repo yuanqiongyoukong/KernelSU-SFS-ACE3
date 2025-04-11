@@ -84,7 +84,7 @@ jobs:
         repo sync -c -j$(nproc --all) --no-tags
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
-        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' common/scripts/setlocalversion
+        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' ./kernel_platform/common/scripts/setlocalversion
         if [ -n "${{ github.event.inputs.KERNEL_NAME }}" ]; then
           sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' ./kernel_platform/common/scripts/setlocalversion
         fi
