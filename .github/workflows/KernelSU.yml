@@ -84,6 +84,7 @@ jobs:
         repo sync -c -j$(nproc --all) --no-tags
         rm -f ./kernel_platform/common/android/abi_gki_protected_exports_* ./kernel_platform/msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./kernel_platform/common/scripts/setlocalversion ./kernel_platform/msm-kernel/scripts/setlocalversion ./kernel_platform/external/dtc/scripts/setlocalversion
+        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' common/scripts/setlocalversion
         if [ -n "${{ github.event.inputs.KERNEL_NAME }}" ]; then
           sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME }}"|' ./kernel_platform/common/scripts/setlocalversion
         fi
@@ -108,6 +109,17 @@ jobs:
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+
+    - name: 设置 SukiSU
+      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+        cd ./KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        export KSU_VERSION=$KSU_VERSION
+        sed -i "s/DKSU_VERSION=12500/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 设置 SUSFS
       if: github.event.inputs.SUSFS_ENABLED == 'true'
@@ -118,7 +130,7 @@ jobs:
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
-    - name: ksu 补丁
+    - name: KSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
@@ -131,17 +143,17 @@ jobs:
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
-    - name: Mksu 补丁
+    - name: MKSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'mksu'
       run: |
         cd kernel_workspace
-        git clone https://github.com/WildPlusKernel/kernel_patches.git --depth 1
+        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        cp ../kernel_patches/mksu/mksu_susfs.patch ./KernelSU/
-        cp ../kernel_patches/mksu/fix.patch ./KernelSU/
-        cp ../kernel_patches/mksu/vfs_fix.patch ./KernelSU/
+        cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
+        cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
+        cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
         
         # 应用补丁
         cd ./KernelSU
@@ -151,17 +163,29 @@ jobs:
         patch -p1 --forward < vfs_fix.patch || true
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
-        cp ../../kernel_patches/69_hide_stuff.patch ./
+        cp ../../kernelsu_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
-        
-    - name: VFS 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && ${{ github.event.inputs.PATCH_CONFIG  == 'mksu' || github.event.inputs.PATCH_CONFIG  == 'sukisu' }}
+        cp ../../kernelsu_patch/hooks/new_hooks.patch ./
+        patch -p1 -F 3 < new_hooks.patch
+
+    - name: SukiSU 补丁
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'sukisu'
       run: |
-        cd kernel_workspace/kernel_platform/common
+        cd kernel_workspace
+        git clone https://github.com/ShirkNeko/SukiSU_patch.git
+        cd kernel_platform
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        
+        # 应用补丁
+        cd ./common
+        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        cp ../../SukiSU_patch/69_hide_stuff.patch ./
+        patch -p1 -F 3 < 69_hide_stuff.patch
         cp ../../SukiSU_patch/hooks/new_hooks.patch ./
         patch -p1 -F 3 < new_hooks.patch
         
     - name: 添加 SUSFS 配置设置
+      if: github.event.inputs.SUSFS_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         # 添加 KSU 配置设置
@@ -169,11 +193,13 @@ jobs:
         echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.VFS_patch_ENABLED }}" == 'enable' ]]; then
+        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'mksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
         # 添加 SUSFS 配置设置
@@ -184,7 +210,6 @@ jobs:
         echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -202,6 +227,17 @@ jobs:
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
+
+    - name: 应用 Linux 补丁并替换内核镜像
+      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      run: |
+        cd kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
+        mv kernel_workspace/SukiSU_patch/kpm/patch_linux ./
+        chmod +x patch_linux
+        ./patch_linux
+        rm -f Image
+        mv oImage Image
+      continue-on-error: true 
         
     - name: 制作 AnyKernel3
       run: |
