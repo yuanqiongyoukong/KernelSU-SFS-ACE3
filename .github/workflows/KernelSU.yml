@@ -141,21 +141,20 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://github.com/WildPlusKernel/kernel_patches.git --depth 1
-        git clone https://github.com/yuhangle/Action-KernelSU-Next -b dev --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../kernel_patches/mksu/mksu_susfs.patch ./KernelSU/
-        cp ../Action-KernelSU-Next/mksu_patch/kernel/* ./KernelSU/
+        cp ../kernel_patches/mksu/fix.patch ./KernelSU/
+        cp ../kernel_patches/mksu/vfs_fix.patch ./KernelSU/
         
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         patch -p1 --forward < mksu_susfs.patch || true
-        cd kernel
-        patch < ../core_hook.c.patch || true
-        patch < ../sucompat.c.patch || true
-        cd ../../common
+        patch -p1 --forward < fix.patch || true
+        patch -p1 --forward < vfs_fix.patch || true
+        cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         cp ../../kernel_patches/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
