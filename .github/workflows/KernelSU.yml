@@ -239,13 +239,13 @@ jobs:
         echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'mksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'rksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
+        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'ksu' ]]; then
+          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        else
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
-        else
-          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
         # 添加 SUSFS 配置设置
