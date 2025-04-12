@@ -206,6 +206,12 @@ jobs:
         cd ./common
         patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
+        cp ../../kernelsu_patch/69_hide_stuff.patch ./
+        patch -p1 -F 3 < 69_hide_stuff.patch
+        
+        cp ../../kernelsu_patch/hooks/new_hooks.patch ./
+        patch -p1 -F 3 < new_hooks.patch
+        
     - name: SukiSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'sukisu'
       run: |
@@ -233,7 +239,7 @@ jobs:
         echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'mksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
+        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'mksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'rksu' || "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
