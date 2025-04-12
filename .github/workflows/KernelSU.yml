@@ -266,6 +266,7 @@ jobs:
     - name: 应用 Linux 补丁并替换内核镜像
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
+        rm -f kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist
         mv kernel_workspace/SukiSU_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
         cd kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
         chmod +x patch_linux
