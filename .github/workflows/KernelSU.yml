@@ -152,8 +152,8 @@ jobs:
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
-        cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
-        cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
+        # cp ../kernelsu_patch/mksu/kernel/core_hook.c.patch ./KernelSU/kernel
+        # cp ../kernelsu_patch/mksu/kernel/sucompat.c.patch ./KernelSU/kernel
         
         # 应用补丁
         cd ./KernelSU
@@ -162,6 +162,8 @@ jobs:
         
         # 还原对devpts hook的删除
         cd kernel
+        # patch -p1 --forward < core_hook.c.patch || true
+        # patch -p1 --forward < sucompat.c.patch || true
         git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%h") -n
         
         cd ../../common
