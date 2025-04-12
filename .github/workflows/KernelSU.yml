@@ -99,17 +99,27 @@ jobs:
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-    - name: 设置 MKernelSU
+    - name: 设置 MKSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
         cd KernelSU
-        git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
+        # git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
+    - name: 设置 RKSU
+      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/refs/heads/susfs-v1.5.5/kernel/setup.sh" | bash -
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+        
     - name: 设置 SukiSU
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
