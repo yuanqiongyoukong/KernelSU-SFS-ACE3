@@ -34,6 +34,7 @@ on:
         options:
           - ksu
           - mksu
+          - rksu
           - sukisu
       SUSFS_ENABLED:
         description: "设置 SUSFS"
@@ -47,6 +48,7 @@ on:
         options:
           - ksu
           - mksu
+          - rksu
           - sukisu
       KERNEL_NAME:
         description: "自定义内核后版本名"
