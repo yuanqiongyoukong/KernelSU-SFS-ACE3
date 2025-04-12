@@ -179,8 +179,10 @@ jobs:
         
         cd ../../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        
         cp ../../kernelsu_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
+        
         cp ../../kernelsu_patch/hooks/new_hooks.patch ./
         patch -p1 -F 3 < new_hooks.patch
 
@@ -215,8 +217,10 @@ jobs:
         # 应用补丁
         cd ./common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        
         cp ../../SukiSU_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
+        
         cp ../../SukiSU_patch/hooks/new_hooks.patch ./
         patch -p1 -F 3 < new_hooks.patch
         
@@ -264,7 +268,7 @@ jobs:
         rm -rf ./AnyKernel3/.git
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
 
-    - name: 应用 Linux 补丁并替换内核镜像
+    - name: kpm 补丁
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist
