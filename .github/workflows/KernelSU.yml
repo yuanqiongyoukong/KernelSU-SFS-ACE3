@@ -183,6 +183,26 @@ jobs:
         cp ../../kernelsu_patch/hooks/new_hooks.patch ./
         patch -p1 -F 3 < new_hooks.patch
 
+    - name: RKSU 补丁
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'rksu'
+      run: |
+        cd kernel_workspace
+        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
+        cd kernel_platform
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        
+        # 应用补丁
+        cd ./KernelSU
+        patch -p1 -f < 10_enable_susfs_for_ksu.patch || true
+        
+        # 将手动修补的文件替换掉修补失败的文件
+        cd ..
+        # rsync -avz ../kernelsu_patch/rksu/kernel/ ./KernelSU/kernel
+        
+        cd ./common
+        patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        
     - name: SukiSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'sukisu'
       run: |
