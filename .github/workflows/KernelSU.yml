@@ -234,7 +234,11 @@ jobs:
         cd kernel_workspace/kernel_platform
         # 添加 KSU 配置设置
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
+        
+        # 添加 KPM 配置设置
+        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
+          echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
+        fi
         
         # 添加 VFS 配置设置
         if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'ksu' ]]; then
