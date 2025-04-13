@@ -59,6 +59,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          /usr/local/bin/repo
+          /var/cache/apt/archives
+        key: ${{ runner.os }}-dependencies-${{ hashFiles('**/requirements.txt') }}
+        
+    - name: Cache kernel code
+      uses: actions/cache@v3
+      with:
+        path: kernel_workspace
+        key: ${{ runner.os }}-kernel-code-${{ github.event.inputs.CPU }}-${{ github.event.inputs.FEIL }}
+        
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
@@ -81,9 +95,11 @@ jobs:
         
     - name: 拉取内核清单
       run: |
+        if [ -z "$(ls -A .)" ]; then
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
         repo sync -c -j$(nproc --all) --no-tags
+        fi
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -267,7 +283,8 @@ jobs:
         cd kernel_workspace
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        KCFLAGS="-O3 -flto -mllvm -polly" ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
+        LTO=thin KCFLAGS="-O3 -flto=thin -mllvm -polly"
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki -j$(nproc --all)
 
     - name: kpm 补丁
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
