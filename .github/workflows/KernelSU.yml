@@ -281,8 +281,7 @@ jobs:
         cd kernel_workspace
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        LTO=thin KCFLAGS="-O3 -flto=thin -march=native -mllvm -polly -mllvm -force-vector-width=8"
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki -j$(nproc --all) LLVM=1
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki -j$(nproc --all)
         
     - name: kpm 补丁
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
