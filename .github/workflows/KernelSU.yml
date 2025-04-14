@@ -108,7 +108,6 @@ jobs:
         cd kernel_workspace/kernel_platform
         curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
         cd KernelSU
-        git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
@@ -150,11 +149,9 @@ jobs:
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-        
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
@@ -167,15 +164,13 @@ jobs:
         cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
-        
         # 应用补丁
         cd ./KernelSU
+        git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-        
         patch -p1 --forward < mksu_susfs.patch || true
         patch -p1 --forward < fix.patch || true
         patch -p1 --forward < vfs_fix.patch || true
-        
         cd ../common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
@@ -185,15 +180,11 @@ jobs:
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        
         # 应用补丁
         cd ./KernelSU
         patch -p1 -f < 10_enable_susfs_for_ksu.patch || true
-        
-        # 将手动修补的文件替换掉修补失败的文件
         cd ..
         rsync -avz ../kernelsu_patch/rksu/kernel/ ./KernelSU/kernel
-        
         cd ./common
         patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
@@ -202,7 +193,6 @@ jobs:
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
-        
         # 应用补丁
         cd ./common
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
