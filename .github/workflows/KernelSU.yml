@@ -59,20 +59,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          /usr/local/bin/repo
-          /var/cache/apt/archives
-        key: ${{ runner.os }}-dependencies-${{ hashFiles('**/requirements.txt') }}
-        
-    - name: Cache kernel code
-      uses: actions/cache@v3
-      with:
-        path: kernel_workspace
-        key: ${{ runner.os }}-kernel-code-${{ github.event.inputs.CPU }}-${{ github.event.inputs.FEIL }}
-        
     - name: 最大化构建空间
       uses: easimon/maximize-build-space@master
       with:
