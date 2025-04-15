@@ -143,7 +143,7 @@ jobs:
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
     - name: KSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'ksu'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
@@ -155,7 +155,7 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: MKSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'mksu'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
@@ -174,7 +174,7 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: RKSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'rksu'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
@@ -188,7 +188,7 @@ jobs:
         patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: SukiSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG == 'sukisu'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
@@ -204,7 +204,7 @@ jobs:
         patch -p1 -F 3 < 69_hide_stuff.patch
 
     - name: New Hooks 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.PATCH_CONFIG != 'ksu'
+      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION != 'ksu'
       run: |
         cd kernel_workspace/kernel_platform/common
         cp ../../kernelsu_patch/hooks/new_hooks.patch ./
@@ -218,12 +218,12 @@ jobs:
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 KPM 配置设置
-        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'sukisu' ]]; then
+        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'sukisu' ]]; then
           echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.PATCH_CONFIG  }}" == 'ksu' ]]; then
+        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
         else
