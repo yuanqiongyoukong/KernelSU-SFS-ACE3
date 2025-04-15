@@ -46,11 +46,9 @@ on:
         required: false 
         type: choice
         options:
+          - none
           - tag
           - main
-          - rksu
-          - sukisu
-        default: ''
       KERNEL_NAME:
         description: "自定义内核版本号"
         required: false 
