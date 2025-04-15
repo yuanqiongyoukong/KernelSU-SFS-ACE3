@@ -276,6 +276,8 @@ jobs:
         if [ -d "kernel_workspace/kernelsu_patch" ]; then
           mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
         else
+          curl -LO https://raw.githubusercontent.com/Numbersf/Action-Build/main/patch_linux
+          mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
         fi
         cd kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
         chmod +x patch_linux
