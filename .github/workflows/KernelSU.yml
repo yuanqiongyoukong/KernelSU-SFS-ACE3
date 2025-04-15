@@ -46,7 +46,6 @@ on:
         required: false 
         type: choice
         options:
-          - none
           - tag
           - main
       KERNEL_NAME:
@@ -95,7 +94,12 @@ jobs:
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
+          echo "BRANCH=-" >> $GITHUB_ENV
+        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+          echo "BRANCH=-s main" >> $GITHUB_ENV
+        fi
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -105,7 +109,8 @@ jobs:
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
+        echo "BRANCH=-" >> $GITHUB_ENV
+        curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -115,7 +120,8 @@ jobs:
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/refs/heads/susfs-v1.5.5/kernel/setup.sh" | bash -
+        echo "BRANCH=-" >> $GITHUB_ENV
+        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/refs/heads/susfs-v1.5.5/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -125,7 +131,12 @@ jobs:
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
+          echo "BRANCH=-" >> $GITHUB_ENV
+        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+          echo "BRANCH=-s susfs-dev" >> $GITHUB_ENV
+        fi
+        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd ./KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -256,7 +267,7 @@ jobs:
         cd kernel_workspace
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki -j$(nproc --all)
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
         
     - name: kpm 补丁
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
