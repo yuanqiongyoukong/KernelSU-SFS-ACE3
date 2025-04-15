@@ -41,15 +41,16 @@ on:
         required: true 
         type: boolean
         default: true 
-      PATCH_CONFIG:
-        description: "补丁配置"
-        required: true 
+      BRANCH_CONFIG:
+        description: "分支配置"
+        required: false 
         type: choice
         options:
-          - ksu
-          - mksu
+          - tag
+          - main
           - rksu
           - sukisu
+        default: ''
       KERNEL_NAME:
         description: "自定义内核版本号"
         required: false 
