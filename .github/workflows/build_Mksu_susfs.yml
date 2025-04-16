@@ -4,37 +4,37 @@ on:
     inputs:
       CPU:
         description: "分支"
-        required: true
+        required: true 
         default: 'sm8550'
       FEIL:
         description: "配置文件"
-        required: true
+        required: true 
         default: 'oneplus_ace3_v'
       CPUD:
         description: "处理器代号"
-        required: true
+        required: true 
         default: 'kalama'
       ANDROID_VERSION:
         description: "内核安卓版本"
-        required: true
+        required: true 
         default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
-        required: true
+        required: true 
         default: '5.15'
       MKSU_ENABLED:
         description: "添加 MKSU"
-        required: true
+        required: true 
         type: boolean
-        default: false
+        default: false 
       SUSFS_ENABLED:
         description: "添加 SUSFS"
-        required: true
+        required: true 
         type: boolean
-        default: false
+        default: false 
       KERNEL_NAME:
         description: "自定义内核后版本名"
-        required: false
+        required: false 
         default: ''
 jobs:
   build:
@@ -53,8 +53,8 @@ jobs:
           
       - name: Configure Git
         run: |
-         git config --global user.name "build"
-         git config --global user.email "3436378798@qq.com"
+         git config --global user.name "yuanqiongyoukong"
+         git config --global user.email "413722718@qq.com"
       - name: Install dependencies
         run: |
          sudo apt update && sudo apt upgrade -y
@@ -83,7 +83,6 @@ jobs:
          cd kernel_workspace/kernel_platform
          curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
          cd KernelSU
-         git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%h") -n
          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
          sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
@@ -96,23 +95,24 @@ jobs:
            git clone https://github.com/TanakaLun/kernel_patches4mksu.git
            cd kernel_platform
            cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-           cp ../kernel_patches4mksu/mksu_susfs.patch ./KernelSU/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-
+           cp ../kernel_patches4mksu/mksu/mksu_susfs.patch ./KernelSU/
+           cp ../kernel_patches4mksu/mksu/fix.patch ./KernelSU/
+           cp ../kernel_patches4mksu/mksu/vfs_fix.patch ./KernelSU/
+           
            # Apply patches
            cd ./KernelSU
+           git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
            patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
            patch -p1 --forward < mksu_susfs.patch || true
+           patch -p1 --forward < fix.patch || true
+           patch -p1 --forward < vfs_fix.patch || true
            cd ../common
            patch -p1 < 50_add_susfs_in_gki-android13-5.15.patch || true
            cp ../../kernel_patches4mksu/69_hide_stuff.patch ./
            patch -p1 -F 3 < 69_hide_stuff.patch
-           git add -A && git commit -a -m "BUILD Kernel"
-           cd ..
-           cd ./msm-kernel && git add -A && git commit -a -m "BUILD Kernel"
-           cd ..
            
       - name: Build kernel
         run: |
