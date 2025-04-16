@@ -33,7 +33,7 @@ on:
         type: boolean
         default: false 
       KERNEL_NAME:
-        description: "自定义内核后版本名"
+        description: "自定义内核版本号"
         required: false 
         default: ''
 jobs:
