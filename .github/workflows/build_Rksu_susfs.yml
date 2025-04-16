@@ -4,37 +4,37 @@ on:
     inputs:
       CPU:
         description: "分支"
-        required: true
+        required: true 
         default: 'sm8550'
       FEIL:
         description: "配置文件"
-        required: true
+        required: true 
         default: 'oneplus_ace3_v'
       CPUD:
         description: "处理器代号"
-        required: true
+        required: true 
         default: 'kalama'
       ANDROID_VERSION:
         description: "内核安卓版本"
-        required: true
+        required: true 
         default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
-        required: true
+        required: true 
         default: '5.15'
       RKSU_ENABLED:
         description: "添加 rKSU"
-        required: true
+        required: true 
         type: boolean
-        default: false
+        default: false 
       SUSFS_ENABLED:
         description: "添加 SUSFS"
-        required: true
+        required: true 
         type: boolean
-        default: false
+        default: false 
       KERNEL_NAME:
         description: "自定义内核后版本名"
-        required: false
+        required: false 
         default: ''
 jobs:
   build:
@@ -53,8 +53,8 @@ jobs:
           
       - name: Configure Git
         run: |
-         git config --global user.name "build"
-         git config --global user.email "3436378798@qq.com"
+         git config --global user.name "yuanqiongyoukong"
+         git config --global user.email "413722718@qq.com"
       - name: Install dependencies
         run: |
          sudo apt update && sudo apt upgrade -y
@@ -92,25 +92,26 @@ jobs:
         run: |
            cd kernel_workspace
            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
-           git clone https://github.com/yuhangle/Action-KernelSU-Next.git
+           git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git
            cd kernel_platform
            cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
            cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
            cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
            cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+           
            # Apply patches
            cd ./KernelSU
            patch -p1 -f < 10_enable_susfs_for_ksu.patch || true
            # 将手动修补的文件替换掉修补失败的文件
            cd ..
-           rsync -avz ../Action-KernelSU-Next/rkernelsu_patch/kernel/ ./KernelSU/kernel
+           rsync -avz ../kernelsu_patch/rksu/kernel/ ./KernelSU/kernel
            cd ./common
            patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
            
       - name: Build kernel
         run: |
          cd kernel_workspace
-          LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
+         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
          
       - name: Make AnyKernel3
         run: |
