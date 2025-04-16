@@ -22,8 +22,8 @@ on:
         description: "内核版本"
         required: true
         default: '5.15'
-      RKSU_ENABLED:
-        description: "添加 rKSU"
+      MKSU_ENABLED:
+        description: "添加 MKSU"
         required: true
         type: boolean
         default: false
@@ -78,7 +78,7 @@ jobs:
          fi
 
       - name: Set up mKernelSU
-        if: github.event.inputs.RKSU_ENABLED == 'true'
+        if: github.event.inputs.MKSU_ENABLED == 'true'
         run: |
          cd kernel_workspace/kernel_platform
          curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash -
