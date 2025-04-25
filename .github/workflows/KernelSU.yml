@@ -123,7 +123,7 @@ jobs:
         if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
           echo "BRANCH=-s main" >> $GITHUB_ENV
         elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
-          echo "BRANCH=-s susfs-1.5.7" >> $GITHUB_ENV
+          echo "BRANCH=-s susfs-v1.5.7" >> $GITHUB_ENV
         fi
         curl -LSs "curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
