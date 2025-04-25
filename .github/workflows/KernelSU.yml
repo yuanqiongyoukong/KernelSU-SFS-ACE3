@@ -120,7 +120,11 @@ jobs:
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        echo "BRANCH=-s susfs-v1.5.7" >> $GITHUB_ENV
+        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
+          echo "BRANCH=-s main" >> $GITHUB_ENV
+        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+          echo "BRANCH=-s susfs-v1.5.7" >> $GITHUB_ENV
+        fi
         curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
