@@ -240,10 +240,15 @@ jobs:
         # 添加 VFS 配置设置
         if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' || "${{ github.event.inputs.KSU_VERSION  }}" == 'rksu' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
+        fi
+        
+        # 添加 OVERLAYFS 配置设置
+        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' ]]; then
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        else
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
