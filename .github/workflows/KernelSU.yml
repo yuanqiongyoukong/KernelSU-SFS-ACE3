@@ -2,22 +2,6 @@ name: 构建KernelSU
 on:
   workflow_dispatch:
     inputs:
-      CPU:
-        description: "分支"
-        required: true 
-        default: 'sm8550'
-      FEIL:
-        description: "配置文件"
-        required: true 
-        default: 'oneplus_ace3_v'
-      CPUD:
-        description: "处理器代号"
-        required: true 
-        default: 'kalama'
-      ANDROID_VERSION:
-        description: "内核安卓版本"
-        required: true 
-        default: 'android13'
       KERNEL_VERSION:
         description: "内核版本"
         required: true 
@@ -54,18 +38,10 @@ on:
         default: ''
 
 env:
-  GIT_USER_NAME: yuanqiongyoukong      ${GIT_USER_NAME}
-  GIT_USER_EMAIL: 413722718@qq.com
-  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
-  KERNELSU_URL: https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh
-  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
-  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
-  KSU_DIR: KernelSU
-  WORK_DIR: kernel_workspace
-  PLAT_DIR: kernel_platform
-  BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
-  UP_AK3: AnyKernel3
-  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/Image
+  CPU: sm8550
+  FEIL: oneplus_ace3_v
+  CPUD: kalama
+  ANDROID_VERSION: android13
   
 jobs:
   build:
@@ -94,7 +70,7 @@ jobs:
     - name: 拉取内核清单
       run: |
         mkdir kernel_workspace && cd kernel_workspace
-        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
+        repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1
         repo sync -c -j$(nproc --all) --no-tags
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
@@ -165,7 +141,7 @@ jobs:
       if: github.event.inputs.SUSFS_ENABLED == 'true'
       run: |
         cd kernel_workspace
-        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
+        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
         git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
@@ -176,19 +152,19 @@ jobs:
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: MKSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
@@ -200,25 +176,25 @@ jobs:
         patch -p1 --forward < fix.patch || true
         patch -p1 --forward < vfs_fix.patch || true
         cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: RKSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         # 应用补丁
         cd ./common
-        patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: SukiSU 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         # 应用补丁
         cd ./common
-        patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: Hide Stuff 补丁
       if: github.event.inputs.SUSFS_ENABLED == 'true'
@@ -285,19 +261,19 @@ jobs:
         cd kernel_workspace
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki -j$(nproc --all)
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
       if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
-        rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist
+        rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/dist
         if [ -d "kernel_workspace/kernelsu_patch" ]; then
-          mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
+          mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
         else
           curl -LO https://raw.githubusercontent.com/yuanqiongyoukong/kernelsu_patch/main/kpm/patch_linux
-          mv ./patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
+          mv ./patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
         fi
-        cd kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/
+        cd kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
         chmod +x patch_linux
         ./patch_linux
         rm -f Image
@@ -306,18 +282,18 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        mv kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${FEIL}
         path: kernel_workspace/AnyKernel3/*
       continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${FEIL}
         path: kernel_workspace/AnyKernel3/Image
