@@ -52,7 +52,21 @@ on:
         description: "自定义内核版本号"
         required: false 
         default: ''
-        
+
+env:
+  GIT_USER_NAME: yuanqiongyoukong      ${GIT_USER_NAME}
+  GIT_USER_EMAIL: 413722718@qq.com
+  KERNEL_MANIFEST_URL: https://github.com/OnePlusOSS/kernel_manifest.git
+  KERNELSU_URL: https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh
+  SUSFS_REPO: https://gitlab.com/simonpunk/susfs4ksu.git
+  ANYKERNEL3_REPO: https://github.com/Kernel-SU/AnyKernel3
+  KSU_DIR: KernelSU
+  WORK_DIR: kernel_workspace
+  PLAT_DIR: kernel_platform
+  BUILD_KERNEL: kernel_platform/oplus/build/oplus_build_kernel.sh
+  UP_AK3: AnyKernel3
+  UP_IMG: kernel_workspace/kernel_platform/out/msm-kernel-kalama-gki/Image
+  
 jobs:
   build:
     runs-on: ubuntu-latest
