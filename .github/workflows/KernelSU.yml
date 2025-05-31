@@ -238,7 +238,7 @@ jobs:
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 KPM 配置设置
-        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'sukisu' ]]; then
+        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'sukisu' && "${{ github.event.inputs.KPM  }}" == 'true' ]]; then
           echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
