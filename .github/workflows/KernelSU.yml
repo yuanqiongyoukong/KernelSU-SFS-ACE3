@@ -92,6 +92,9 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1
         repo sync -c -j$(nproc --all) --no-tags
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
+        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -162,7 +165,6 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
-        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
@@ -217,14 +219,14 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: Hide Stuff 补丁
-      if: github.event.inputs.HIDE == 'true' && github.event.inputs.SUSFS_ENABLED == 'true'
+      if: github.event.inputs.HIDE == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
         cp ../../kernelsu_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
         
     - name: VFS 补丁
-      if: github.event.inputs.VFS == 'true' && github.event.inputs.SUSFS_ENABLED == 'true'
+      if: github.event.inputs.VFS == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -246,14 +248,14 @@ jobs:
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.VFS  }}" == 'true' ]]; then
+        if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
         # 添加 OVERLAYFS 配置设置
-        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' ]]; then
+        if [[ "${{ github.event.inputs.KSU_VERSION }}" == 'ksu' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
@@ -281,20 +283,13 @@ jobs:
     - name: 编译内核
       run: |
         cd kernel_workspace
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
       if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/dist
-        if [ -d "kernel_workspace/kernelsu_patch" ]; then
-          mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
-        else
-          curl -LO https://raw.githubusercontent.com/yuanqiongyoukong/kernelsu_patch/main/kpm/patch_linux
-          mv ./patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
-        fi
+        mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
         cd kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
         chmod +x patch_linux
         ./patch_linux
