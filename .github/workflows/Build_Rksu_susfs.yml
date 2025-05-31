@@ -84,7 +84,7 @@ jobs:
       if: github.event.inputs.RKSU_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform
-        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/refs/heads/susfs-v1.5.5/kernel/setup.sh" | bash -
+        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/refs/heads/susfs-v1.5.5/kernel/setup.sh" | bash -s susfs-v1.5.7
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -97,16 +97,10 @@ jobs:
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
         git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git
         cd kernel_platform
-        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
         # Apply patches
-        cd ./KernelSU
-        patch -p1 -f < 10_enable_susfs_for_ksu.patch || true
-        # 将手动修补的文件替换掉修补失败的文件
-        cd ..
-        rsync -avz ../kernelsu_patch/rksu/kernel/ ./KernelSU/kernel
         cd ./common
         patch -p1 -f < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
