@@ -36,26 +36,26 @@ on:
         description: "自定义内核版本号"
         required: false 
         default: ''
-      HIDE:
+      ZRAM_ENABLED:
+        type: boolean
+        description: "是否启用添加更多的ZRAM算法？"
+        required: true 
+        default: true 
+      HIDE_ENABLED:
         type: boolean
         description: "是否启用隐藏补丁？"
         required: true 
         default: true 
-      VFS:
+      VFS_ENABLED:
         type: boolean
         description: "是否启用手动钩子？"
         required: true 
         default: true 
-      KPM:
+      KPM_ENABLED:
         type: boolean
         description: "是否启用KPM？"
         required: true 
         default: true 
-      ZRAM:
-        type: boolean
-        description: "是否启用添加更多的ZRAM算法？"
-        required: true 
-        default: false 
 
 env:
   CPU: sm8550
@@ -218,15 +218,47 @@ jobs:
         cd ./common
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
+    - name: ZRAM 补丁
+      if: github.event.inputs.ZRAM_ENABLED == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform
+        cp -r ../kernelsu_patch/mksu/zram/lz4k/include/linux/* ./common/include/linux
+        cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
+        cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
+        cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
+        cd ./common
+        cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
+        patch -p1 -F 3 < lz4kd.patch || true
+        cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
+        patch -p1 -F 3 < lz4k_oplus.patch || true
+        CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
+        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
+          sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
+        else
+          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+        fi
+        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
+          sed -i 's/CONFIG_ZSMALLOC=m/CONFIG_ZSMALLOC=y/g' "$CONFIG_FILE"
+        else
+          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
+        fi
+        rm "common/android/gki_aarch64_modules"
+        touch "common/android/gki_aarch64_modules"
+        echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_842=y" >> "$CONFIG_FILE"
+        echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
+        
     - name: Hide Stuff 补丁
-      if: github.event.inputs.HIDE == 'true'
+      if: github.event.inputs.HIDE_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
         cp ../../kernelsu_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
         
     - name: VFS 补丁
-      if: github.event.inputs.VFS == 'true'
+      if: github.event.inputs.VFS_ENABLED == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -235,7 +267,7 @@ jobs:
         patch -p1 -F 3 < syscall_hooks.patch
         
     - name: KPM 补丁
-      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.KPM_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -248,7 +280,7 @@ jobs:
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
+        if [[ "${{ github.event.inputs.VFS_ENABLED }}" == 'true' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -286,7 +318,7 @@ jobs:
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
-      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.KPM_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/dist
         mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
