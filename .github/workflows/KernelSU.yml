@@ -151,7 +151,7 @@ jobs:
         if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
           echo "BRANCH=-s susfs-dev" >> $GITHUB_ENV
         else
-          echo "BRANCH=-" >> $GITHUB_ENV
+          echo "BRANCH=-s main" >> $GITHUB_ENV
         fi
         curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd ./KernelSU
