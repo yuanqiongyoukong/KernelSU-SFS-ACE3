@@ -6,7 +6,7 @@ on:
         description: "内核版本"
         required: true 
         default: '5.15'
-      KSU_ENABLED:
+      KSU:
         description: "设置 KernelSU"
         required: true 
         type: boolean
@@ -20,7 +20,7 @@ on:
           - mksu
           - rksu
           - sukisu
-      SUSFS_ENABLED:
+      SUSFS:
         description: "设置 SUSFS"
         required: true 
         type: boolean
@@ -36,22 +36,22 @@ on:
         description: "自定义内核版本号"
         required: false 
         default: ''
-      ZRAM_ENABLED:
+      ZRAM:
         type: boolean
         description: "是否启用添加更多的ZRAM算法？"
         required: true 
         default: true 
-      HIDE_ENABLED:
+      HIDE:
         type: boolean
         description: "是否启用隐藏补丁？"
         required: true 
         default: true 
-      VFS_ENABLED:
+      VFS:
         type: boolean
         description: "是否启用手动钩子？"
         required: true 
         default: true 
-      KPM_ENABLED:
+      KPM:
         type: boolean
         description: "是否启用KPM？"
         required: true 
@@ -104,7 +104,7 @@ jobs:
         fi
         
     - name: 设置 KernelSU
-      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
         if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
@@ -119,7 +119,7 @@ jobs:
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 设置 MKSU
-      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         echo "BRANCH=-" >> $GITHUB_ENV
@@ -130,7 +130,7 @@ jobs:
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 设置 RKSU
-      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
         if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
@@ -145,7 +145,7 @@ jobs:
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 设置 SukiSU
-      if: github.event.inputs.KSU_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
         if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
@@ -161,7 +161,7 @@ jobs:
         sed -i "s/DKSU_VERSION=12500/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
     - name: 设置 SUSFS
-      if: github.event.inputs.SUSFS_ENABLED == 'true'
+      if: github.event.inputs.SUSFS == 'true'
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
@@ -170,7 +170,7 @@ jobs:
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
     - name: KSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
@@ -182,7 +182,7 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: MKSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
@@ -201,7 +201,7 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: RKSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
@@ -210,7 +210,7 @@ jobs:
         patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: SukiSU 补丁
-      if: github.event.inputs.SUSFS_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
@@ -219,7 +219,7 @@ jobs:
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
         
     - name: ZRAM 补丁
-      if: github.event.inputs.ZRAM_ENABLED == 'true'
+      if: github.event.inputs.ZRAM == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         cp -r ../kernelsu_patch/mksu/zram/lz4k/include/linux/* ./common/include/linux
@@ -251,14 +251,14 @@ jobs:
         echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
         
     - name: Hide Stuff 补丁
-      if: github.event.inputs.HIDE_ENABLED == 'true'
+      if: github.event.inputs.HIDE == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
         cp ../../kernelsu_patch/69_hide_stuff.patch ./
         patch -p1 -F 3 < 69_hide_stuff.patch
         
     - name: VFS 补丁
-      if: github.event.inputs.VFS_ENABLED == 'true'
+      if: github.event.inputs.VFS == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -267,20 +267,20 @@ jobs:
         patch -p1 -F 3 < syscall_hooks.patch
         
     - name: KPM 补丁
-      if: github.event.inputs.KPM_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         
     - name: 添加 SUSFS 配置设置
-      if: github.event.inputs.SUSFS_ENABLED == 'true'
+      if: github.event.inputs.SUSFS == 'true'
       run: |
         cd kernel_workspace/kernel_platform
         # 添加 KSU 配置设置
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         # 添加 VFS 配置设置
-        if [[ "${{ github.event.inputs.VFS_ENABLED }}" == 'true' ]]; then
+        if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
         else
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -318,7 +318,7 @@ jobs:
         LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
-      if: github.event.inputs.KPM_ENABLED == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/dist
         mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
@@ -332,17 +332,22 @@ jobs:
     - name: 制作 AnyKernel3
       run: |
         mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        clean_feil="${FEIL}"
+        clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
+        clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
+        echo "FEIL=$clean_feil" >> $GITHUB_ENV
+        echo "VALUE=${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}${{ github.event.inputs.ZRAM == 'true' && '_LZ4KD' || '' }}" >> $GITHUB_ENV
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${FEIL}
+        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ env.FEIL }}${{ env.VALUE }}
         path: kernel_workspace/AnyKernel3/*
       continue-on-error: true 
         
     - name: 上传 Image
       uses: actions/upload-artifact@v4
       with:
-        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${FEIL}
+        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ env.FEIL }}${{ env.VALUE }}
         path: kernel_workspace/AnyKernel3/Image
