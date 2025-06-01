@@ -133,10 +133,10 @@ jobs:
       if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
-          echo "BRANCH=-s main" >> $GITHUB_ENV
-        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+        if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
           echo "BRANCH=-s susfs-v1.5.7" >> $GITHUB_ENV
+        else
+          echo "BRANCH=-s main" >> $GITHUB_ENV
         fi
         curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
@@ -148,10 +148,10 @@ jobs:
       if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
-        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
-          echo "BRANCH=-" >> $GITHUB_ENV
-        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+        if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
           echo "BRANCH=-s susfs-dev" >> $GITHUB_ENV
+        else
+          echo "BRANCH=-" >> $GITHUB_ENV
         fi
         curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd ./KernelSU
