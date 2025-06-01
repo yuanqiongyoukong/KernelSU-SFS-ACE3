@@ -280,6 +280,7 @@ jobs:
         if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
         else
+          echo "CONFIG_KPROBES=y" >>  ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
         fi
         
@@ -312,7 +313,9 @@ jobs:
     - name: 编译内核
       run: |
         cd kernel_workspace
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
+        export BAZEL_BUILD_ARGS="--jobs=2 --local_ram_resources=6000 --local_cpu_resources=2"
+        LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
+        # LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
       if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
