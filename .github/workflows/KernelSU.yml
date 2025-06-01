@@ -219,7 +219,7 @@ jobs:
       if: github.event.inputs.ZRAM == 'true'
       run: |
         cd kernel_workspace/kernel_platform
-        cp -r ../kernelsu_patch/mksu/zram/lz4k/include/linux/* ./common/include/linux
+        cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
         cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
         cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
         cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
