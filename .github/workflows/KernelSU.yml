@@ -260,7 +260,7 @@ jobs:
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
         cd ./common
-        cp ../../kernelsu_patch/hooks/syscall_hooks ./
+        cp ../../kernelsu_patch/hooks/syscall_hooks.patch ./
         patch -p1 -F 3 < syscall_hooks.patch
         
     - name: KPM 补丁
