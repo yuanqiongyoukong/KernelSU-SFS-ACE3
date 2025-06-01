@@ -2,10 +2,6 @@ name: 构建KernelSU
 on:
   workflow_dispatch:
     inputs:
-      KERNEL_VERSION:
-        description: "内核版本"
-        required: true 
-        default: '5.15'
       KSU:
         description: "设置 KernelSU"
         required: true 
@@ -20,11 +16,6 @@ on:
           - mksu
           - rksu
           - sukisu
-      SUSFS:
-        description: "设置 SUSFS"
-        required: true 
-        type: boolean
-        default: true 
       BRANCH_CONFIG:
         description: "分支配置"
         required: false 
@@ -32,10 +23,11 @@ on:
         options:
           - tag
           - main
-      KERNEL_NAME:
-        description: "自定义内核版本号"
-        required: false 
-        default: ''
+      SUSFS:
+        description: "设置 SUSFS"
+        required: true 
+        type: boolean
+        default: true 
       ZRAM:
         type: boolean
         description: "是否启用添加更多的ZRAM算法？"
@@ -56,12 +48,17 @@ on:
         description: "是否启用KPM？"
         required: true 
         default: true 
+      KERNEL_NAME:
+        description: "自定义内核版本号"
+        required: false 
+        default: ''
 
 env:
   CPU: sm8550
   FEIL: oneplus_ace3_v
   CPUD: kalama
   ANDROID_VERSION: android13
+  KERNEL_VERSION: 5.15
   
 jobs:
   build:
@@ -164,7 +161,7 @@ jobs:
       if: github.event.inputs.SUSFS == 'true'
       run: |
         cd kernel_workspace
-        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }} --depth 1
+        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${KERNEL_VERSION} --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
@@ -174,19 +171,19 @@ jobs:
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
         # 应用补丁
         cd ./KernelSU
         patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
         cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
     - name: MKSU 补丁
       if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
         cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
         cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
         cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
@@ -198,25 +195,25 @@ jobs:
         patch -p1 --forward < fix.patch || true
         patch -p1 --forward < vfs_fix.patch || true
         cd ../common
-        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
     - name: RKSU 补丁
       if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
         # 应用补丁
         cd ./common
-        patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
     - name: SukiSU 补丁
       if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch ./common/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
         # 应用补丁
         cd ./common
-        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
     - name: ZRAM 补丁
       if: github.event.inputs.ZRAM == 'true'
