@@ -228,7 +228,7 @@ jobs:
         patch -p1 -F 3 < lz4kd.patch || true
         cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
         patch -p1 -F 3 < lz4k_oplus.patch || true
-        CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
+        CONFIG_FILE=./arch/arm64/configs/gki_defconfig
         if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
           sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
         else
