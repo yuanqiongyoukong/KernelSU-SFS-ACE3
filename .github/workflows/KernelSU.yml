@@ -261,8 +261,8 @@ jobs:
         else
           echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
         fi
-        # rm "android/gki_aarch64_modules"
-        # touch "android/gki_aarch64_modules"
+        rm "android/gki_aarch64_modules"
+        touch "android/gki_aarch64_modules"
         echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
         echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
         echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
