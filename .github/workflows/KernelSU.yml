@@ -248,8 +248,8 @@ jobs:
         cd ./common
         cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
         patch -p1 -F 3 < lz4kd.patch || true
-        # cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
-        # patch -p1 -F 3 < lz4k_oplus.patch || true
+        cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
+        patch -p1 -F 3 < lz4k_oplus.patch || true
         CONFIG_FILE=./arch/arm64/configs/gki_defconfig
         if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
           sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
@@ -261,8 +261,8 @@ jobs:
         else
           echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
         fi
-        rm "android/gki_aarch64_modules"
-        touch "android/gki_aarch64_modules"
+        # rm "android/gki_aarch64_modules"
+        # touch "android/gki_aarch64_modules"
         echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
         echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
         echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
@@ -314,7 +314,7 @@ jobs:
       run: |
         cd kernel_workspace
         export BAZEL_BUILD_ARGS="--jobs=2 --local_ram_resources=6000 --local_cpu_resources=2"
-        LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki
+        LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         # LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: kpm 补丁
