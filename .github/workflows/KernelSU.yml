@@ -215,37 +215,11 @@ jobs:
         cd ./common
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
-    - name: ZRAM 补丁
-      if: github.event.inputs.ZRAM == 'true'
+    - name: KPM 补丁
+      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
       run: |
         cd kernel_workspace/kernel_platform
-        cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
-        cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
-        cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
-        cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
-        cd ./common
-        cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
-        patch -p1 -F 3 < lz4kd.patch || true
-        # cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
-        # patch -p1 -F 3 < lz4k_oplus.patch || true
-        CONFIG_FILE=./arch/arm64/configs/gki_defconfig
-        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
-          sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
-        else
-          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
-        fi
-        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
-          sed -i 's/CONFIG_ZSMALLOC=m/CONFIG_ZSMALLOC=y/g' "$CONFIG_FILE"
-        else
-          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
-        fi
-        rm "android/gki_aarch64_modules"
-        touch "android/gki_aarch64_modules"
-        echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_842=y" >> "$CONFIG_FILE"
-        echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
+        echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
         
     - name: Hide Stuff 补丁
       if: github.event.inputs.HIDE == 'true'
@@ -263,11 +237,37 @@ jobs:
         cp ../../kernelsu_patch/hooks/syscall_hooks.patch ./
         patch -p1 -F 3 < syscall_hooks.patch
         
-    - name: KPM 补丁
-      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
+    - name: ZRAM 补丁
+      if: github.event.inputs.ZRAM == 'true'
       run: |
         cd kernel_workspace/kernel_platform
-        echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
+        cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
+        cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
+        cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
+        cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
+        cd ./common
+        cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
+        patch -p1 -F 3 < lz4kd.patch || true
+        # cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
+        # patch -p1 -F 3 < lz4k_oplus.patch || true
+        CONFIG_FILE=./arch/arm64/configs/gki_defconfig
+        # if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
+        #   sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
+        # else
+        #   echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
+        # fi
+        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
+          sed -i 's/CONFIG_ZSMALLOC=m/CONFIG_ZSMALLOC=y/g' "$CONFIG_FILE"
+        else
+          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
+        fi
+        rm "android/gki_aarch64_modules"
+        touch "android/gki_aarch64_modules"
+        echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
+        echo "CONFIG_CRYPTO_842=y" >> "$CONFIG_FILE"
+        echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
         
     - name: 添加 SUSFS 配置设置
       if: github.event.inputs.SUSFS == 'true'
