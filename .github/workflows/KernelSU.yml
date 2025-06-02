@@ -28,9 +28,9 @@ on:
         required: true 
         type: boolean
         default: true 
-      ZRAM:
+      KPM:
         type: boolean
-        description: "是否启用添加更多的ZRAM算法？"
+        description: "是否启用KPM？"
         required: true 
         default: true 
       HIDE:
@@ -43,9 +43,9 @@ on:
         description: "是否启用手动钩子？"
         required: true 
         default: true 
-      KPM:
+      ZRAM:
         type: boolean
-        description: "是否启用KPM？"
+        description: "是否启用添加更多的ZRAM算法？"
         required: true 
         default: true 
       KERNEL_NAME:
