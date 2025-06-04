@@ -214,6 +214,14 @@ jobs:
         # 应用补丁
         cd ./common
         patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
+
+        #lz4k
+        if [[ "${{ github.event.inputs.ZRAM }}" == "true" ]]; then
+          cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
+          cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
+          cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
+          cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
+        fi
         
     - name: KPM 补丁
       if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
@@ -241,17 +249,17 @@ jobs:
       if: github.event.inputs.ZRAM == 'true'
       run: |
         cd kernel_workspace/kernel_platform
-        cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
-        cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
-        cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
-        cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
-        echo "CONFIG_ZSMALLOC=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_CRYPTO_LZ4K=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_CRYPTO_LZ4KD=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_CRYPTO_842=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_CRYPTO_LZ4K_OPLUS=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_ZRAM_WRITEBACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
+        # cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
+        # cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
+        # cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
+        # echo "CONFIG_ZSMALLOC=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_CRYPTO_LZ4K=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_CRYPTO_LZ4KD=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_CRYPTO_842=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_CRYPTO_LZ4K_OPLUS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        # echo "CONFIG_ZRAM_WRITEBACK=y" >> ./common/arch/arm64/configs/gki_defconfig
         cd ./common
         cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
         patch -p1 -F 3 < lz4kd.patch || true
@@ -313,6 +321,17 @@ jobs:
         echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
+
+        # Add ZRAM
+        if [[ "${{ github.event.inputs.ZRAM }}" == "true" ]]; then
+          echo "CONFIG_ZSMALLOC=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CRYPTO_LZ4K=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CRYPTO_LZ4KD=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CRYPTO_842=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_CRYPTO_LZ4K_OPLUS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_ZRAM_WRITEBACK=y" >> ./common/arch/arm64/configs/gki_defconfig
+        fi
         
         # 移除 check_defconfig
         sed -i 's/check_defconfig//' ./common/build.config.gki
@@ -320,7 +339,7 @@ jobs:
     - name: 编译内核
       run: |
         cd kernel_workspace
-        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
+        LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki
         
     - name: kpm 补丁
       if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
