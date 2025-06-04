@@ -267,8 +267,8 @@ jobs:
         patch -p1 -F 3 < lz4kd.patch || true
         cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
         patch -p1 -F 3 < lz4k_oplus.patch || true
-        # rm "android/gki_aarch64_modules"
-        # touch "android/gki_aarch64_modules"
+        rm "android/gki_aarch64_modules"
+        touch "android/gki_aarch64_modules"
         
     - name: 添加 SUSFS 配置设置
       if: github.event.inputs.SUSFS == 'true'
