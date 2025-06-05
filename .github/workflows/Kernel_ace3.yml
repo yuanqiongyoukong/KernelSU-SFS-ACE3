@@ -29,7 +29,7 @@ jobs:
       run: |
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8550 -m oneplus_ace3_v.xml --depth=1
-        repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
+        repo sync  -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
         
     - name: 添加KernelSU
       run: |
