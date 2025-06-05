@@ -1,4 +1,4 @@
-name: 构建ACE3内核-KernelSU-SUSFS
+name: 构建ACE3内核-KernelSU-SFS
 on:
   workflow_dispatch:
 jobs:
