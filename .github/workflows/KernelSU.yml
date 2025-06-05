@@ -263,10 +263,10 @@ jobs:
         echo "CONFIG_CRYPTO_LZ4K_OPLUS=y" >> "$CONFIG_FILE"
         echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
         cd ./common
-        # cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
-        # patch -p1 -F 3 < lz4kd.patch || true
-        cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
-        patch -p1 -F 3 < lz4k_oplus.patch || true
+        cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
+        patch -p1 -F 3 < lz4kd.patch || true
+        # cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
+        # patch -p1 -F 3 < lz4k_oplus.patch || true
         rm "android/gki_aarch64_modules"
         touch "android/gki_aarch64_modules"
         
