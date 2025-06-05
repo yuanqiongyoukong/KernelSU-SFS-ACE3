@@ -1,4 +1,4 @@
-name: Build MKernelSU
+name: 构建-MKernelSU
 on:
   workflow_dispatch:
     inputs:
