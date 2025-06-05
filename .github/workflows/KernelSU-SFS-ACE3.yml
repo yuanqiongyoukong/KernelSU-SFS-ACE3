@@ -1,4 +1,4 @@
-name: 构建KernelSU
+name: 构建KernelSU-SFS-ACE3
 on:
   workflow_dispatch:
     inputs:
