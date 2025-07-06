@@ -15,7 +15,6 @@ on:
           - ksu
           - mksu
           - rksu
-          - sukisu
       BRANCH_CONFIG:
         description: "分支配置"
         required: false 
@@ -28,11 +27,6 @@ on:
         required: true 
         type: boolean
         default: true 
-      KPM:
-        type: boolean
-        description: "是否启用KPM？"
-        required: true 
-        default: true 
       HIDE:
         type: boolean
         description: "是否启用隐藏补丁？"
@@ -43,11 +37,6 @@ on:
         description: "是否启用手动钩子？"
         required: true 
         default: true 
-      ZRAM:
-        type: boolean
-        description: "是否启用添加更多的ZRAM算法？"
-        required: true 
-        default: false 
       KERNEL_NAME:
         description: "自定义内核版本号"
         required: false 
@@ -141,22 +130,6 @@ jobs:
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-    - name: 设置 SukiSU
-      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
-      run: |
-        cd kernel_workspace/kernel_platform
-        if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
-          echo "BRANCH=-s susfs-dev" >> $GITHUB_ENV
-        else
-          echo "BRANCH=-s main" >> $GITHUB_ENV
-        fi
-        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
-        cd ./KernelSU
-        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
-        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        export KSU_VERSION=$KSU_VERSION
-        sed -i "s/DKSU_VERSION=12500/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
-        
     - name: 设置 SUSFS
       if: github.event.inputs.SUSFS == 'true'
       run: |
@@ -206,21 +179,6 @@ jobs:
         cd ./common
         patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
-    - name: SukiSU 补丁
-      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
-      run: |
-        cd kernel_workspace/kernel_platform
-        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
-        # 应用补丁
-        cd ./common
-        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
-        
-    - name: KPM 补丁
-      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
-      run: |
-        cd kernel_workspace/kernel_platform
-        echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
-        
     - name: Hide Stuff 补丁
       if: github.event.inputs.HIDE == 'true'
       run: |
@@ -236,39 +194,6 @@ jobs:
         cd ./common
         cp ../../kernelsu_patch/hooks/syscall_hooks.patch ./
         patch -p1 -F 3 < syscall_hooks.patch
-        
-    - name: ZRAM 补丁
-      if: github.event.inputs.ZRAM == 'true'
-      run: |
-        cd kernel_workspace/kernel_platform
-        cp -r ../kernelsu_patch/zram/lz4k/include/linux/* ./common/include/linux
-        cp -r ../kernelsu_patch/zram/lz4k/lib/* ./common/lib
-        cp -r ../kernelsu_patch/zram/lz4k/crypto/* ./common/crypto
-        cp -r ../kernelsu_patch/zram/lz4k_oplus ./common/lib/
-        CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
-        if grep -q "CONFIG_ZRAM" -- "$CONFIG_FILE"; then
-          sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' "$CONFIG_FILE"
-        else
-          echo "CONFIG_ZRAM=y" >> "$CONFIG_FILE"
-        fi
-        if grep -q "CONFIG_ZSMALLOC" -- "$CONFIG_FILE"; then
-          sed -i 's/CONFIG_ZSMALLOC=m/CONFIG_ZSMALLOC=y/g' "$CONFIG_FILE"
-        else
-          echo "CONFIG_ZSMALLOC=y" >> "$CONFIG_FILE"
-        fi
-        echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_842=y" >> "$CONFIG_FILE"
-        echo "CONFIG_CRYPTO_LZ4K_OPLUS=y" >> "$CONFIG_FILE"
-        echo "CONFIG_ZRAM_WRITEBACK=y" >> "$CONFIG_FILE"
-        cd ./common
-        cp ../../kernelsu_patch/zram/zram_patch/lz4kd.patch ./
-        patch -p1 -F 3 < lz4kd.patch || true
-        cp ../../kernelsu_patch/zram/zram_patch/lz4k_oplus.patch ./
-        patch -p1 -F 3 < lz4k_oplus.patch || true
-        rm "android/gki_aarch64_modules"
-        touch "android/gki_aarch64_modules"
         
     - name: 添加 SUSFS 配置设置
       if: github.event.inputs.SUSFS == 'true'
@@ -317,18 +242,6 @@ jobs:
         LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 \
         ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki
         
-    - name: kpm 补丁
-      if: github.event.inputs.KPM == 'true' && github.event.inputs.KSU_VERSION == 'sukisu'
-      run: |
-        rm -rf kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/dist
-        mv kernel_workspace/kernelsu_patch/kpm/patch_linux kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
-        cd kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/
-        chmod +x patch_linux
-        ./patch_linux
-        rm -f Image
-        mv oImage Image
-      continue-on-error: true 
-        
     - name: 制作 AnyKernel3
       run: |
         mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
@@ -336,7 +249,7 @@ jobs:
         clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
         clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
         echo "FEIL=$clean_feil" >> $GITHUB_ENV
-        echo "VALUE=${{ github.event.inputs.KPM == 'true' && '_KPM' || '' }}${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}${{ github.event.inputs.ZRAM == 'true' && '_LZ4KD' || '' }}" >> $GITHUB_ENV
+        echo "VALUE=${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}" >> $GITHUB_ENV
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
