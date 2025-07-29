@@ -20,7 +20,7 @@ on:
       SUSFS: 
         description: "设置 SUSFS"
         required: true 
-        type: boolean 
+        type: boolean
         default: true 
       HIDE: 
         description: "是否启用隐藏补丁？"
@@ -49,24 +49,23 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ksu_version: ${{ steps.set-ksu.outputs.KSUVER  }}
-      kernel_src_ready: ${{ steps.save-artifacts.outputs.kernel_src_ready  }}
     steps:
-    - name: 最大化构建空间
-      uses: easimon/maximize-build-space@master 
+    - name: 最大化构建空间 
+      uses: easimon/maximize-build-space@master
       with:
-        root-reserve-mb: 16384 
-        temp-reserve-mb: 2048
-        swap-size-mb: 8192
+        root-reserve-mb: 16384
+        temp-reserve-mb: 2048 
+        swap-size-mb: 8192 
         remove-dotnet: 'true'
         remove-android: 'true'
         remove-haskell: 'true'
         remove-codeql: 'true'
         
-    - name: 缓存 .repo 目录 
-      id: repo-cache
-      uses: actions/cache@v3
+    - name: 缓存 .repo 目录
+      id: repo-cache 
+      uses: actions/cache@v3 
       with:
-        path: kernel_workspace/.repo 
+        path: kernel_workspace/.repo
         key: ${{ runner.os  }}-repo-${{ env.CPU }}-${{ env.FEIL }}
         restore-keys: |
           ${{ runner.os  }}-repo-${{ env.CPU }}-
@@ -92,67 +91,64 @@ jobs:
         
         repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
         
-        if [ ! -d "AnyKernel3" ]; then
-          git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1 
-          rm -rf ./AnyKernel3/.git 
-        fi
+        if [ ! -d "AnyKernel3" ]; then 
+          git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
+          rm -rf ./AnyKernel3/.git
+        fi 
         
-        if [ ! -d "kernelsu_patch" ]; then 
-          git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git  --depth 1 
-        fi
+        if [ ! -d "kernelsu_patch" ]; then
+          git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git  --depth 1
+        fi 
         
-        cd kernel_platform
-        rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || true 
-        sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
-        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' ./common/scripts/setlocalversion 
+        cd kernel_platform 
+        rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || true
+        sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion 
+        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' ./common/scripts/setlocalversion
         
-        if [ -n "${{ github.event.inputs.KERNEL_NAME  }}" ]; then
-          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME  }}"|' ./common/scripts/setlocalversion 
-        fi
+        if [ -n "${{ github.event.inputs.KERNEL_NAME  }}" ]; then 
+          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME  }}"|' ./common/scripts/setlocalversion
+        fi 
         
-    - name: 设置 KernelSU 
-      id: set-ksu 
+    - name: 设置 KernelSU
+      id: set-ksu
       if: github.event.inputs.KSU  == 'true'
       run: |
-        cd kernel_workspace/kernel_platform 
+        cd kernel_workspace/kernel_platform
         
         # 根据类型设置分支
-        if [ "${{ github.event.inputs.KSU_VERSION  }}" == "ksu" ]; then
-          if [[ "${{ github.event.inputs.BRANCH_CONFIG  }}" == "tag" ]]; then
+        if [ "${{ github.event.inputs.KSU_VERSION  }}" == "ksu" ]; then 
+          if [[ "${{ github.event.inputs.BRANCH_CONFIG  }}" == "tag" ]]; then 
             branch=""
-          else 
-            branch="-s main"
-          fi
-        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "mksu" ]; then
-          branch=""
-        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "rksu" ]; then
-          if [[ "${{ github.event.inputs.SUSFS  }}" == "true" ]]; then
-            branch="-s susfs-v1.5.7"
           else
             branch="-s main"
           fi 
-        fi
+        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "mksu" ]; then 
+          branch=""
+        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "rksu" ]; then 
+          if [[ "${{ github.event.inputs.SUSFS  }}" == "true" ]]; then 
+            branch="-s susfs-v1.5.7"
+          else 
+            branch="-s main"
+          fi
+        fi 
         
         # 设置 KernelSU
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh"  | bash $branch
         
-        # 计算并设置版本号
-        cd KernelSU 
+        # 计算并设置版本号 
+        cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile 
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_OUTPUT 
         
-    - name: 上传源码缓存 
-      id: save-artifacts 
-      uses: actions/upload-artifact@v4 
+    - name: 上传源码缓存
+      uses: actions/upload-artifact@v4
       with:
         name: kernel-sources-${{ github.run_id  }}
-        path: kernel_workspace
-        retention-days: 1
+        path: kernel_workspace 
+        retention-days: 1 
       continue-on-error: true 
-      run: |
-        echo "kernel_src_ready=true" >> $GITHUB_OUTPUT 
  
   build:
     needs: prepare 
@@ -172,16 +168,16 @@ jobs:
           git clone https://gitlab.com/simonpunk/susfs4ksu.git  -b gki-${ANDROID_VERSION}-${KERNEL_VERSION} --depth 1
         fi 
         cd kernel_platform 
-        cp -n ../susfs4ksu/kernel_patches/fs/* ./common/fs/ || true 
-        cp -n ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/ || true
+        cp -n ../susfs4ksu/kernel_patches/fs/* ./common/fs/ || true
+        cp -n ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/ || true 
         
-    - name: 并行应用补丁
+    - name: 并行应用补丁 
       run: |
-        cd kernel_workspace/kernel_platform 
+        cd kernel_workspace/kernel_platform
         declare -a pids=()
         
         # SUSFS 补丁 (并行)
-        if [ "${{ github.event.inputs.SUSFS  }}" == "true" ]; then
+        if [ "${{ github.event.inputs.SUSFS  }}" == "true" ]; then 
           apply_susfs_patch() {
             if [ "${{ github.event.inputs.KSU_VERSION  }}" == "ksu" ]; then 
               cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch  ./KernelSU/
@@ -229,18 +225,18 @@ jobs:
         if [ "${{ github.event.inputs.VFS  }}" == "true" ]; then 
           apply_vfs_patch() {
             cd ./common
-            echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./arch/arm64/configs/gki_defconfig 
+            echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./arch/arm64/configs/gki_defconfig
             cp ../../kernelsu_patch/hooks/syscall_hooks.patch  ./
-            patch -p1 -F 3 < syscall_hooks.patch  
+            patch -p1 -F 3 < syscall_hooks.patch 
             cd ..
           }
           apply_vfs_patch &
           pids+=($!)
-        fi
+        fi 
         
-        # 等待所有补丁应用完成
-        for pid in ${pids[@]}; do
-          wait $pid 
+        # 等待所有补丁应用完成 
+        for pid in ${pids[@]}; do 
+          wait $pid
         done 
         
     - name: 添加 SUSFS 配置设置 
@@ -249,35 +245,35 @@ jobs:
         cd kernel_workspace/kernel_platform
         echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
         
-        # VFS 配置
-        if [[ "${{ github.event.inputs.VFS  }}" == 'true' ]]; then 
-          echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig 
-        else
+        # VFS 配置 
+        if [[ "${{ github.event.inputs.VFS  }}" == 'true' ]]; then
+          echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
+        else 
           echo "CONFIG_KPROBES=y" >> ./common/arch/arm64/configs/gki_defconfig 
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig 
         fi
         
-        # OverlayFS 配置 
-        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' ]]; then
-          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        else
-          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig 
-        fi
+        # OverlayFS 配置
+        if [[ "${{ github.event.inputs.KSU_VERSION  }}" == 'ksu' ]]; then 
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        else 
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
+        fi 
         
-        # 通用 SUSFS 配置 
-        echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig 
-        echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig 
+        # 通用 SUSFS 配置
+        echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig 
+        echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig 
+        echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
         echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./common/arch/arm64/configs/gki_defconfig
-        echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig 
         echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
         
         sed -i 's/check_defconfig//' ./common/build.config.gki  
