@@ -1,3 +1,123 @@
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      ksu_version: ${{ steps.set-ksu.outputs.KSUVER  }}
+    steps:
+    - name: 最大化构建空间 
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 16384
+        temp-reserve-mb: 2048 
+        swap-size-mb: 8192 
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+        
+    - name: 缓存 .repo 目录
+      id: repo-cache 
+      uses: actions/cache@v3 
+      with:
+        path: kernel_workspace/.repo
+        key: ${{ runner.os  }}-repo-${{ env.CPU }}-${{ env.FEIL }}
+        restore-keys: |
+          ${{ runner.os  }}-repo-${{ env.CPU }}-
+          
+    - name: 初始化编译环境 
+      run: |
+        git config --global user.name  "yuanqiongyoukong"
+        git config --global user.email  "413722718@qq.com" 
+        sudo apt update && sudo apt upgrade -y && sudo apt install -y python3 git curl
+        curl -o ~/repo https://storage.googleapis.com/git-repo-downloads/repo 
+        chmod a+x ~/repo 
+        sudo mv ~/repo /usr/local/bin/repo
+        
+    - name: 拉取内核清单
+      run: |
+        mkdir -p kernel_workspace
+        cd kernel_workspace 
+        
+        # 仅当缓存未命中时重新初始化
+        if [[ ! -d .repo ]]; then 
+          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git  -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1 
+        fi
+        
+        repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
+        
+        if [ ! -d "AnyKernel3" ]; then 
+          git clone https://github.com/Kernel-SU/AnyKernel3  --depth=1
+          rm -rf ./AnyKernel3/.git
+        fi 
+        
+        if [ ! -d "kernelsu_patch" ]; then
+          git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git  --depth 1
+        fi 
+        
+        cd kernel_platform 
+        rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || true
+        sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion 
+        sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' ./common/scripts/setlocalversion
+        
+        if [ -n "${{ github.event.inputs.KERNEL_NAME  }}" ]; then 
+          sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME  }}"|' ./common/scripts/setlocalversion
+        fi 
+        
+    - name: 设置 KernelSU
+      id: set-ksu
+      if: github.event.inputs.KSU  == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform
+        
+        # 根据类型设置分支
+        if [ "${{ github.event.inputs.KSU_VERSION  }}" == "ksu" ]; then 
+          if [[ "${{ github.event.inputs.BRANCH_CONFIG  }}" == "tag" ]]; then 
+            branch=""
+          else
+            branch="-s main"
+          fi 
+        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "mksu" ]; then 
+          branch=""
+        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "rksu" ]; then 
+          if [[ "${{ github.event.inputs.SUSFS  }}" == "true" ]]; then 
+            branch="-s susfs-v1.5.7"
+          else 
+            branch="-s main"
+          fi
+        fi 
+        
+        # 设置 KernelSU
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh"  | bash $branch
+        
+        # 计算并设置版本号 
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile 
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_OUTPUT 
+        
+    - name: 上传源码缓存
+      uses: actions/upload-artifact@v4
+      with:
+        name: kernel-sources-${{ github.run_id  }}
+        path: kernel_workspace 
+        retention-days: 1 
+      continue-on-error: true 
+ 
+  build:
+    needs: prepare 
+    runs-on: ubuntu-latest
+    steps:
+    - name: 下载源码缓存
+      uses: actions/download-artifact@v4 
+      with:
+        name: kernel-sources-${{ github.run_id  }}
+        path: kernel_workspace
+
+
+
+
+
 name: 超高速内核构建 - 2025优化版 
 on:
   workflow_dispatch:
