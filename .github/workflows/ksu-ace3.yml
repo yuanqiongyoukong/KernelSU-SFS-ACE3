@@ -1,8 +1,57 @@
+name: 构建KernelSU-SFS-ACE3
+on:
+  workflow_dispatch:
+    inputs:
+      KSU:
+        description: "设置 KernelSU"
+        required: true 
+        type: boolean
+        default: true 
+      KSU_VERSION:
+        description: "ksu版本"
+        required: true 
+        type: choice
+        options:
+          - ksu
+          - mksu
+          - rksu
+      BRANCH_CONFIG:
+        description: "分支配置"
+        required: false 
+        type: choice
+        options:
+          - tag
+          - main
+      SUSFS:
+        description: "设置 SUSFS"
+        required: true 
+        type: boolean
+        default: true 
+      HIDE:
+        type: boolean
+        description: "是否启用隐藏补丁？"
+        required: true 
+        default: true 
+      VFS:
+        type: boolean
+        description: "是否启用手动钩子？"
+        required: true 
+        default: true 
+      KERNEL_NAME:
+        description: "自定义内核版本号"
+        required: false 
+        default: ''
+
+env:
+  CPU: sm8550
+  FEIL: oneplus_ace3_v
+  CPUD: kalama
+  ANDROID_VERSION: android13
+  KERNEL_VERSION: 5.15
+  
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      ksu_version: ${{ steps.set-ksu.outputs.KSUVER  }}
     steps:
     - name: 最大化构建空间 
       uses: easimon/maximize-build-space@master
@@ -63,39 +112,6 @@ jobs:
           sed -i '$s|echo "\$res"|echo "-${{ github.event.inputs.KERNEL_NAME  }}"|' ./common/scripts/setlocalversion
         fi 
         
-    - name: 设置 KernelSU
-      id: set-ksu
-      if: github.event.inputs.KSU  == 'true'
-      run: |
-        cd kernel_workspace/kernel_platform
-        
-        # 根据类型设置分支
-        if [ "${{ github.event.inputs.KSU_VERSION  }}" == "ksu" ]; then 
-          if [[ "${{ github.event.inputs.BRANCH_CONFIG  }}" == "tag" ]]; then 
-            branch=""
-          else
-            branch="-s main"
-          fi 
-        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "mksu" ]; then 
-          branch=""
-        elif [ "${{ github.event.inputs.KSU_VERSION  }}" == "rksu" ]; then 
-          if [[ "${{ github.event.inputs.SUSFS  }}" == "true" ]]; then 
-            branch="-s susfs-v1.5.7"
-          else 
-            branch="-s main"
-          fi
-        fi 
-        
-        # 设置 KernelSU
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh"  | bash $branch
-        
-        # 计算并设置版本号 
-        cd KernelSU
-        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile 
-        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-        echo "KSUVER=$KSU_VERSION" >> $GITHUB_OUTPUT 
-        
     - name: 上传源码缓存
       uses: actions/upload-artifact@v4
       with:
@@ -113,281 +129,179 @@ jobs:
       with:
         name: kernel-sources-${{ github.run_id  }}
         path: kernel_workspace
-
-
-
-
-
-name: 超高速内核构建 - 2025优化版 
-on:
-  workflow_dispatch:
-    inputs:
-      KSU: 
-        description: "启用 KernelSU"
-        required: true 
-        type: boolean 
-        default: true 
-      KSU_VERSION:
-        description: "KernelSU 版本"
-        required: true 
-        type: choice 
-        options: [ksu, mksu, rksu]
-      BRANCH_CONFIG:
-        description: "分支配置"
-        required: false 
-        type: choice 
-        options: [tag, main]
-      SUSFS: 
-        description: "启用 SUSFS"
-        required: true 
-        type: boolean
-        default: true 
-      HIDE: 
-        description: "启用隐藏补丁"
-        required: true 
-        type: boolean 
-        default: true 
-      VFS: 
-        description: "启用手动钩子"
-        required: true 
-        type: boolean 
-        default: true 
-      KERNEL_NAME:
-        description: "自定义内核名"
-        required: false 
-        default: ''
- 
-env:
-  CPU: sm8550
-  FEIL: oneplus_ace3_v 
-  CPUD: kalama
-  ANDROID_VERSION: android13 
-  KERNEL_VERSION: 5.15
-  SSD_CACHE: /mnt/ssd-cache  # SSD加速缓存路径 
- 
-jobs:
-  prepare:
-    runs-on: ubuntu-latest 
-    outputs:
-      ksu_version: ${{ steps.set-ksu.outputs.KSUVER  }}
-    steps:
-    - name:  挂载SSD加速盘 
-      run: |
-        sudo mkdir -p ${{ env.SSD_CACHE }}
-        sudo mount -t tmpfs -o size=8G tmpfs ${{ env.SSD_CACHE }}
-        echo "GIT_TEMPLATE_DIR=${{ env.SSD_CACHE }}/git-template" >> $GITHUB_ENV
-        mkdir -p ${{ env.SSD_CACHE }}/git-template/hooks
         
-    - name: 🔍 智能缓存.repo
-      id: repo-cache 
-      uses: actions/cache@v3 
-      with:
-        path: |
-          kernel_workspace/.repo
-          kernel_workspace/kernelsu_patch
-        key: ${{ runner.os  }}-repo-${{ env.CPU }}-${{ hashFiles('.github/kernel_versions') }}-${{ inputs.KSU_VERSION }}
-        restore-keys: |
-          ${{ runner.os  }}-repo-${{ env.CPU }}-
-          
-    - name:  极速初始化 
-      run: |
-        # SSD加速配置 
-        git config --global uploadpack.allowFilter  true 
-        git config --global core.preloadIndex  true
-        git config --global core.fscache  true 
-        git config --global pack.threads  $(nproc)
-        
-        # 基础环境
-        sudo apt install -y python3 git-core curl make gcc binutils --no-install-recommends 
-        
-        # 仅当缓存未命中时初始化
-        if [[ ! -f /usr/local/bin/repo ]]; then
-          curl -Lo /usr/local/bin/repo https://mirror.iscas.ac.cn/git-repo/repo 
-          chmod a+x /usr/local/bin/repo
-        fi 
- 
-    - name: 📥 增量同步内核 
-      run: |
-        mkdir -p kernel_workspace 
-        cd kernel_workspace
-        
-        # 智能增量同步
-        repo init -u https://mirror.iscas.ac.cn/AOSP/kernel/manifest  \
-          -b refs/heads/oneplus/${CPU} \
-          -m ${FEIL}.xml \
-          --depth=1 \
-          --repo-url=https://mirror.iscas.ac.cn/git-repo  
-        
-        repo sync -c -j$(nproc) \
-          --no-tags \
-          --no-clone-bundle \
-          --optimized-fetch \
-          --prune \
-          --force-sync
-        
-        # 按需克隆组件
-        if [[ ! -d AnyKernel3 && '${{ inputs.KSU }}' == 'true' ]]; then 
-          git clone https://ghproxy.com/https://github.com/Kernel-SU/AnyKernel3  --depth=1
-        fi 
-        
-    - name:  ⚙️ 设置 KernelSU
-      id: set-ksu
-      if: ${{ inputs.KSU == 'true' }}
+    - name: 设置 KernelSU
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
         cd kernel_workspace/kernel_platform
-        
-        # 动态分支选择
-        case "${{ inputs.KSU_VERSION }}" in
-          ksu) branch="${{ inputs.BRANCH_CONFIG == 'tag' && '' || '-s main' }}" ;;
-          mksu) branch="" ;;
-          rksu) branch="${{ inputs.SUSFS == 'true' && '-s susfs-v1.5.7' || '-s main' }}" ;;
-        esac 
-        
-        # 云端执行避免本地开销 
-        curl -LSs "https://kernelsu.cc/setup.sh"  | bash ${branch}
-        
-        # 版本号生成 
+        if [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "tag" ]]; then
+          echo "BRANCH=-" >> $GITHUB_ENV
+        elif [[ "${{ github.event.inputs.BRANCH_CONFIG }}" == "main" ]]; then
+          echo "BRANCH=-s main" >> $GITHUB_ENV
+        fi
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
-        KSUVER=$(expr $(git rev-list --count HEAD) + 10200)
-        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSUVER}/" kernel/Makefile 
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-        # 输出结果
-        echo "KSUVER=${KSUVER}" >> $GITHUB_OUTPUT 
-        echo "KSUVER=${KSUVER}" >> $GITHUB_ENV
- 
-  build:
-    needs: prepare
-    runs-on: ubuntu-latest 
-    env:
-      BUILD_THREADS: ${{ matrix.threads  }}
-    strategy:
-      matrix:
-        threads: [16, 32]  # 动态线程分配 
-        
-    steps:
-    - name:  🔄 继承SSD缓存 
-      run: |
-        sudo mkdir -p ${{ env.SSD_CACHE }}
-        sudo mount -t tmpfs -o size=8G tmpfs ${{ env.SSD_CACHE }}
-        echo "GIT_TEMPLATE_DIR=${{ env.SSD_CACHE }}/git-template" >> $GITHUB_ENV 
-        
-    - name:  📦 按需加载SUSFS 
-      if: ${{ inputs.SUSFS == 'true' }}
-      run: |
-        cd kernel_workspace
-        if [ ! -d "susfs4ksu" ]; then
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git  \
-            -b gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }} \
-            --depth 1 \
-            --single-branch
-        fi 
-        
-    - name:  ⚡ 并行应用补丁 
+    - name: 设置 MKSU
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
       run: |
         cd kernel_workspace/kernel_platform
-        declare -A patch_map=(
-          [susfs]="${{ inputs.SUSFS == 'true' }}"
-          [hide]="${{ inputs.HIDE == 'true' }}"
-          [vfs]="${{ inputs.VFS == 'true' }}"
-        )
+        echo "BRANCH=-" >> $GITHUB_ENV
+        curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/refs/heads/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-        # 并行补丁引擎 
-        for patch_type in "${!patch_map[@]}"; do 
-          if [[ "${patch_map[$patch_type]}" == "true" ]]; then 
-            (
-              source ${GITHUB_WORKSPACE}/.github/patch_${patch_type}.sh
-            ) &
-          fi 
-        done
-        wait  # 等待所有后台任务
-        
-    - name:  🔧 动态生成配置
-      shell: bash 
+    - name: 设置 RKSU
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
       run: |
         cd kernel_workspace/kernel_platform
-        python3 <<EOF 
-        import os 
-        config_path = "common/arch/arm64/configs/gki_defconfig"
+        if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
+          echo "BRANCH=-s susfs-v1.5.7" >> $GITHUB_ENV
+        else
+          echo "BRANCH=-s main" >> $GITHUB_ENV
+        fi
+        curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
         
-        with open(config_path, "a") as f:
-          f.write("\n#  ===== 动态配置 =====\n")
-          if "${{ inputs.KSU }}" == "true":
-            f.write("CONFIG_KSU=y\n") 
-          
-          # SUSFS配置逻辑 
-          if "${{ inputs.SUSFS }}" == "true":
-            f.write("CONFIG_KSU_SUSFS=y\n") 
-            if "${{ inputs.VFS }}" == "true":
-              f.write("CONFIG_KSU_SUSFS_SUS_SU=n\n") 
-            else:
-              f.write("CONFIG_KPROBES=y\nCONFIG_KSU_SUSFS_SUS_SU=y\n") 
-            
-            # 版本特定配置
-            if "${{ inputs.KSU_VERSION }}" == "ksu":
-              f.write("CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y\n") 
-            else:
-              f.write("CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n\n") 
-            
-            # 通用SUSFS配置 
-            susfs_configs = [
-              "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT",
-              "CONFIG_KSU_SUSFS_SUS_PATH",
-              "CONFIG_KSU_SUSFS_SUS_MOUNT",
-              "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT",
-              "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT",
-              "CONFIG_KSU_SUSFS_SUS_KSTAT",
-              "CONFIG_KSU_SUSFS_TRY_UMOUNT",
-              "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT",
-              "CONFIG_KSU_SUSFS_SPOOF_UNAME",
-              "CONFIG_KSU_SUSFS_ENABLE_LOG",
-              "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS",
-              "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG",
-              "CONFIG_KSU_SUSFS_OPEN_REDIRECT"
-            ]
-            f.write("\n".join(susfs_configs)  + "\n")
-        EOF
-        
-    - name:  🏗️ 并行编译内核
-      timeout-minutes: 25 
+    - name: 设置 SUSFS
+      if: github.event.inputs.SUSFS == 'true'
       run: |
         cd kernel_workspace
-        # 动态线程分配 
-        THREADS=$(( (${BUILD_THREADS} > $(nproc)) ? $(nproc) : ${BUILD_THREADS} ))
-        
-        # 增量编译模式 
-        LTO=thin \
-        SYSTEM_DLKM_RE_SIGN=0 \
-        BUILD_SYSTEM_DLKM=0 \
-        KMI_SYMBOL_LIST_STRICT_MODE=0 \
-        KERNEL_MODULES_SYNC=n \
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh  ${CPUD} gki -j${THREADS}
-        
-    - name:  📦 智能打包AnyKernel 
+        git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${KERNEL_VERSION} --depth 1
+        cd kernel_platform
+        cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+        cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+
+    - name: KSU 补丁
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'ksu'
       run: |
-        cd kernel_workspace 
-        mkdir -p artifact 
+        cd kernel_workspace/kernel_platform
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+        # 应用补丁
+        cd ./KernelSU
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
+        cd ../common
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
-        # 动态生成文件名 
-        FEIL_CLEAN=${FEIL%_v}
-        FEIL_CLEAN=${FEIL_CLEAN%_u}
-        VFS_FLAG=${{ inputs.VFS && '_VFS' || '' }}
-        TIMESTAMP=$(date +"%Y%m%d-%H%M")
+    - name: MKSU 补丁
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'mksu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+        cp ../kernelsu_patch/mksu/mksu_susfs.patch ./KernelSU/
+        cp ../kernelsu_patch/mksu/fix.patch ./KernelSU/
+        cp ../kernelsu_patch/mksu/vfs_fix.patch ./KernelSU/
+        # 应用补丁
+        cd ./KernelSU
+        git revert -m 1 $(git log --grep="remove devpts hook" --pretty=format:"%H") -n
+        patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
+        patch -p1 --forward < mksu_susfs.patch || true
+        patch -p1 --forward < fix.patch || true
+        patch -p1 --forward < vfs_fix.patch || true
+        cd ../common
+        patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
-        # 移动内核映像 
-        cp kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image AnyKernel3/
+    - name: RKSU 补丁
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'rksu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+        # 应用补丁
+        cd ./common
+        patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
-        # 生成元数据
-        echo "KSU_VERSION=${{ inputs.KSU_VERSION }}" > AnyKernel3/build.info  
-        echo "KSU_VER=${{ needs.prepare.outputs.ksu_version  }}" >> AnyKernel3/build.info  
-        echo "BUILD_TIME=${TIMESTAMP}" >> AnyKernel3/build.info  
+    - name: Hide Stuff 补丁
+      if: github.event.inputs.HIDE == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform/common
+        cp ../../kernelsu_patch/69_hide_stuff.patch ./
+        patch -p1 -F 3 < 69_hide_stuff.patch
         
-        # 创建压缩包
-        zip -r0 artifact/AnyKernel3_${FEIL_CLEAN}_${TIMESTAMP}.zip AnyKernel3/*
+    - name: VFS 补丁
+      if: github.event.inputs.VFS == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform
+        echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
+        cd ./common
+        cp ../../kernelsu_patch/hooks/syscall_hooks.patch ./
+        patch -p1 -F 3 < syscall_hooks.patch
         
-    - name:  🚢 高速上传成品 
-      uses: actions/upload-artifact@v4 
+    - name: 添加 SUSFS 配置设置
+      if: github.event.inputs.SUSFS == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform
+        # 添加 KSU 配置设置
+        echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
+        
+        # 添加 VFS 配置设置
+        if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
+          echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
+        else
+          echo "CONFIG_KPROBES=y" >>  ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+        fi
+        
+        # 添加 OVERLAYFS 配置设置
+        if [[ "${{ github.event.inputs.KSU_VERSION }}" == 'ksu' ]]; then
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        else
+          echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/gki_defconfig
+        fi
+        
+        # 添加 SUSFS 配置设置
+        echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig
+        echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
+        
+        # 移除 check_defconfig
+        sed -i 's/check_defconfig//' ./common/build.config.gki
+        
+    - name: 编译内核
+      run: |
+        cd kernel_workspace
+        LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 \
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki
+        
+    - name: 制作 AnyKernel3
+      run: |
+        mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        clean_feil="${FEIL}"
+        clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
+        clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
+        echo "FEIL=$clean_feil" >> $GITHUB_ENV
+        echo "VALUE=${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}" >> $GITHUB_ENV
+      continue-on-error: true 
+        
+    - name: 上传 AnyKernel3
+      uses: actions/upload-artifact@v4
       with:
-        name: Kernel_${{ inputs.KSU_VERSION }}_${{ needs.prepare.outputs.ksu_version  }}_${{ env.FEIL }}
-        path: kernel_workspace/artifact/*.zip 
-        compression-level: 0  # 禁用压缩 
-        retention-days: 7 
+        name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ env.FEIL }}${{ env.VALUE }}
+        path: kernel_workspace/AnyKernel3/*
+      continue-on-error: true 
+        
+    - name: 上传 Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: Image_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ env.FEIL }}${{ env.VALUE }}
+        path: kernel_workspace/AnyKernel3/Image
