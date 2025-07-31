@@ -242,7 +242,6 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        cd kernel_workspace
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
         mv ./kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image ./AnyKernel3/
@@ -258,3 +257,4 @@ jobs:
       with:
         name: AnyKernel3_${{ github.event.inputs.KSU_VERSION }}_${{ env.KSUVER }}_${{ env.FEIL }}${{ env.VALUE }}
         path: kernel_workspace/AnyKernel3/*
+      continue-on-error: true 
