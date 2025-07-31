@@ -48,7 +48,6 @@ env:
   CPUD: kalama
   ANDROID_VERSION: android13
   KERNEL_VERSION: 5.15
-  CONFIG_FILE: ./common/arch/arm64/configs/gki_defconfig
   
 jobs:
   build:
@@ -81,7 +80,6 @@ jobs:
         repo sync  -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -136,6 +134,7 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${KERNEL_VERSION} --depth 1
+        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
@@ -198,6 +197,7 @@ jobs:
       if: github.event.inputs.SUSFS == 'true'
       run: |
         cd kernel_workspace/kernel_platform
+        CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
         # 添加 KSU 配置设置
         echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
         
