@@ -244,7 +244,7 @@ jobs:
       run: |
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
-        mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image kernel_workspace/AnyKernel3/
+        mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image ./AnyKernel3/
         clean_feil="${FEIL}"
         clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
         clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
