@@ -78,6 +78,8 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1
         repo sync  -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -242,8 +244,6 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
         mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image ./AnyKernel3/
         clean_feil="${FEIL}"
         clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
