@@ -233,6 +233,15 @@ jobs:
         echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
         echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
         
+        # 5.10和5.15系内核LTO配置
+        sed -i -e 's/^# CONFIG_LTO is not set/CONFIG_LTO=y/' \
+          -e 's/^CONFIG_LTO=n/CONFIG_LTO=y/' "$CONFIG_FILE"
+        grep -q '^CONFIG_LTO=y' "$CONFIG_FILE" || echo 'CONFIG_LTO=y' >> "$CONFIG_FILE"
+        sed -i -e '/^CONFIG_LTO_CLANG_\(THIN\|FULL\|NONE\)=/d' \
+          -e '/^# CONFIG_LTO_CLANG_\(FULL\|NONE\) is not set/d' \
+          -e 's/^# CONFIG_LTO_CLANG_THIN is not set/CONFIG_LTO_CLANG_THIN=y/' "$CONFIG_FILE"
+        grep -q '^CONFIG_LTO_CLANG_THIN=y' "$CONFIG_FILE" || printf 'CONFIG_LTO_CLANG_THIN=y\n' >> "$CONFIG_FILE"
+        
         # 移除 check_defconfig
         sed -i 's/check_defconfig//' ./common/build.config.gki
         
@@ -240,7 +249,7 @@ jobs:
       run: |
         cd kernel_workspace
         LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 \
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
         
     - name: 制作 AnyKernel3
       run: |
