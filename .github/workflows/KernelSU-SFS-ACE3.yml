@@ -89,7 +89,6 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1
         repo sync  -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
-        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -159,6 +158,7 @@ jobs:
       run: |
         cd kernel_workspace
         git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${ANDROID_VERSION}-${KERNEL_VERSION} --depth 1
+        git clone https://github.com/yuanqiongyoukong/kernelsu_patch.git --depth 1
         cd kernel_platform
         cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
         cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
@@ -228,7 +228,7 @@ jobs:
         patch -p1 -F 3 < scope_min_manual_hooks_v1.6.patch
         
     - name: LSM 补丁
-      if: github.event.inputs.LSM == 'true'
+      if: github.event.inputs.SUSFS == 'true' github.event.inputs.LSM == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
         curl -LSs https://raw.githubusercontent.com/vc-teahouse/Baseband-guard/main/setup.sh | bash
