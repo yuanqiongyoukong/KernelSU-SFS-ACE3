@@ -228,7 +228,7 @@ jobs:
         patch -p1 -F 3 < scope_min_manual_hooks_v1.6.patch
         
     - name: LSM 补丁
-      if: github.event.inputs.SUSFS == 'true' github.event.inputs.LSM == 'true'
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.LSM == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
         curl -LSs https://raw.githubusercontent.com/vc-teahouse/Baseband-guard/main/setup.sh | bash
