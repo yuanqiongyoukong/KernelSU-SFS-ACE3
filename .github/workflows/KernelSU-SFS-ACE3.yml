@@ -15,6 +15,7 @@ on:
           - ksu
           - mksu
           - rksu
+          - sksu
       BRANCH_CONFIG:
         description: "分支配置"
         required: false 
@@ -37,6 +38,16 @@ on:
         description: "是否启用手动钩子？"
         required: true 
         default: true 
+      LSM:
+        type: boolean
+        description: "是否启用内核层面阻止对关键分区/设备节点的非法写入(LSM)？"
+        required: true 
+        default: true 
+      BUILD_TIME:
+        type: string
+        description: "自定义内核构建时间 (输入F使用当前时间)"
+        required: false 
+        default: "Mon Jan 1 12:00:00 UTC 2025"
       KERNEL_NAME:
         description: "自定义内核版本号"
         required: false 
@@ -78,8 +89,6 @@ jobs:
         mkdir kernel_workspace && cd kernel_workspace
         repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${CPU} -m ${FEIL}.xml --depth=1
         repo sync  -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
-        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-        rm -rf ./AnyKernel3/.git
         cd kernel_platform
         rm -f ./common/android/abi_gki_protected_exports_* ./msm-kernel/android/abi_gki_protected_exports_* 2>/dev/null || echo "No protected exports found!"
         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion ./msm-kernel/scripts/setlocalversion ./external/dtc/scripts/setlocalversion
@@ -124,6 +133,21 @@ jobs:
           echo "BRANCH=-s main" >> $GITHUB_ENV
         fi
         curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
+        cd KernelSU
+        KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+        echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+        sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+
+    - name: 设置 SKSU
+      if: github.event.inputs.KSU == 'true' && github.event.inputs.KSU_VERSION == 'sksu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        if [[ "${{ github.event.inputs.SUSFS }}" == "true" ]]; then
+          echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
+        else
+          echo "BRANCH=-s main" >> $GITHUB_ENV
+        fi
+        curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash ${{ env.BRANCH }}
         cd KernelSU
         KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -178,6 +202,15 @@ jobs:
         # 应用补丁
         cd ./common
         patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
+
+    - name: SKSU 补丁
+      if: github.event.inputs.SUSFS == 'true' && github.event.inputs.KSU_VERSION == 'sksu'
+      run: |
+        cd kernel_workspace/kernel_platform
+        cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+        # 应用补丁
+        cd ./common
+        patch -p1 -f < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
         
     - name: Hide Stuff 补丁
       if: github.event.inputs.SUSFS == 'true' && github.event.inputs.HIDE == 'true'
@@ -190,8 +223,15 @@ jobs:
       if: github.event.inputs.SUSFS == 'true' && github.event.inputs.VFS == 'true'
       run: |
         cd kernel_workspace/kernel_platform/common
-        cp ../../kernelsu_patch/hooks/syscall_hooks.patch ./
-        patch -p1 -F 3 < syscall_hooks.patch
+        cp ../../kernelsu_patch/hooks/scope_min_manual_hooks_v1.6.patch ./
+        patch -p1 -F 3 < scope_min_manual_hooks_v1.6.patch
+        
+    - name: LSM 补丁
+      if: github.event.inputs.LSM == 'true'
+      run: |
+        cd kernel_workspace/kernel_platform/common
+        curl -LSs https://raw.githubusercontent.com/vc-teahouse/Baseband-guard/main/setup.sh | bash
+        sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/lockdown/lockdown,baseband_guard/ } }' ./security/Kconfig
         
     - name: 添加 SUSFS 配置设置
       if: github.event.inputs.SUSFS == 'true'
@@ -201,12 +241,18 @@ jobs:
         # 添加 KSU 配置设置
         echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
         
+        # 添加 KPM配置
+        if [[ "${{ github.event.inputs.KSU_VERSION }}" == 'sksu' ]]; then
+          echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
+        fi
+        
         # 添加 VFS 配置设置
         if [[ "${{ github.event.inputs.VFS }}" == 'true' ]]; then
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_MANUAL_HOOK=y" >> "$CONFIG_FILE"
         else
           echo "CONFIG_KPROBES=y" >>  "$CONFIG_FILE"
+          echo "CONFIG_KSU_KPROBES_HOOK=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> "$CONFIG_FILE"
         fi
         
@@ -233,7 +279,7 @@ jobs:
         echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
         echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
         
-        # 5.10和5.15系内核LTO配置
+        # 添加 5.10和5.15系内核LTO配置
         sed -i -e 's/^# CONFIG_LTO is not set/CONFIG_LTO=y/' \
           -e 's/^CONFIG_LTO=n/CONFIG_LTO=y/' "$CONFIG_FILE"
         grep -q '^CONFIG_LTO=y' "$CONFIG_FILE" || echo 'CONFIG_LTO=y' >> "$CONFIG_FILE"
@@ -242,12 +288,44 @@ jobs:
           -e 's/^# CONFIG_LTO_CLANG_THIN is not set/CONFIG_LTO_CLANG_THIN=y/' "$CONFIG_FILE"
         grep -q '^CONFIG_LTO_CLANG_THIN=y' "$CONFIG_FILE" || printf 'CONFIG_LTO_CLANG_THIN=y\n' >> "$CONFIG_FILE"
         
+        # 添加 LSM配置
+        if [ "${{ github.event.inputs.LSM }}" = "true" ]; then
+          echo "CONFIG_BBG=y" >> "$CONFIG_FILE"
+        fi
+        
         # 移除 check_defconfig
         sed -i 's/check_defconfig//' ./common/build.config.gki
-        
+
+    - name: 自定义内核构建时间
+      shell: bash
+      run: |
+        INPUT_TIME="${{ github.event.inputs.BUILD_TIME }}"
+        if [[ -n "$INPUT_TIME" && "$INPUT_TIME" != "F" && "$INPUT_TIME" != "f" ]]; then
+          DATESTR="$INPUT_TIME"
+          echo "Using input BUILD_TIME: $DATESTR"
+        else
+          DATESTR="$(TZ='UTC' date +'%a %b %d %T %Z %Y')"
+          echo "Using UTC time as fallback: $DATESTR"
+        fi
+        echo "KBUILD_BUILD_TIMESTAMP=${DATESTR}" >> "$GITHUB_ENV"
+        echo "KBUILD_BUILD_VERSION=1" >> "$GITHUB_ENV"
+        cd kernel_workspace/kernel_platform/
+        for f in common/scripts/mkcompile_h msm-kernel/scripts/mkcompile_h; do
+          if [ -f "$f" ]; then
+            echo "Patching mkcompile_h with BUILD_TIME=$DATESTR"
+            if grep -q 'UTS_VERSION=' "$f"; then
+              perl -pi -e "s{UTS_VERSION=\"\\\$\\(.*?\\)\"}{UTS_VERSION=\"#1 SMP PREEMPT $DATESTR\"}" "$f"
+            else
+              perl -0777 -pi -e "s{cat <<EOF}{cat <<EOF\n#undef UTS_VERSION\n#define UTS_VERSION \"#1 SMP PREEMPT $DATESTR\" } unless /UTS_VERSION/" "$f"
+            fi
+          fi
+        done
+      
     - name: 编译内核
       run: |
         cd kernel_workspace
+        git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
+        rm -rf ./AnyKernel3/.git
         LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 \
         ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
         
@@ -258,7 +336,7 @@ jobs:
         clean_feil="${clean_feil%_v}"  # 去掉结尾的 _v（如果有）
         clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
         echo "FEIL=$clean_feil" >> $GITHUB_ENV
-        echo "VALUE=${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}" >> $GITHUB_ENV
+        echo "VALUE=${{ github.event.inputs.VFS == 'true' && '_VFS' || '' }}${{ github.event.inputs.LSM == 'true' && '_LSM' || '' }}" >> $GITHUB_ENV
       continue-on-error: true 
         
     - name: 上传 AnyKernel3
