@@ -328,7 +328,7 @@ jobs:
         git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
         rm -rf ./AnyKernel3/.git
         LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 \
-        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+        ./kernel_platform/oplus/build/oplus_build_kernel.sh ${CPUD} gki -j$(nproc --all)
         
     - name: 制作 AnyKernel3
       run: |
