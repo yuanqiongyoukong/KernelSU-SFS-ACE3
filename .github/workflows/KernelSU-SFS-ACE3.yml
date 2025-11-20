@@ -332,7 +332,7 @@ jobs:
         
     - name: 制作 AnyKernel3
       run: |
-        # mv kernel_workspace/kernel_platform/out/msm-kernel-${CPUD}-gki/gki_kernel/dist/Image ./AnyKernel3/
+        cd kernel_workspace
         dir1="kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/"
         dir2="kernel_workspace/kernel_platform/bazel-out/k8-fastbuild/bin/msm-kernel/${{ github.event.inputs.CPUD }}_gki_kbuild_mixed_tree/"
         dir3="kernel_workspace/kernel_platform/out/msm-${{ github.event.inputs.CPUD }}-${{ github.event.inputs.CPUD }}-gki/dist/"
@@ -365,7 +365,7 @@ jobs:
           else
             echo "源文件与目标相同，跳过复制"
           fi
-          cp "$dir1"Image ./AnyKernel3/
+          cp "$dir1"Image ./AnyKernel3/Image
         else
           echo "未找到 Image 文件，构建可能失败"
           exit 1
